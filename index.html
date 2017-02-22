@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<body>
+<script src="http://d3js.org/d3.v4.min.js"></script>
+<script>
+
+var width = 960,
+    height = 500;
+
+var sample = poissonDiscSampler(width, height, 10),
+    samples = [],
+    s;
+
+while (s = sample()) samples.push(s);
+
+var sites = d3.range(300)
+    .map(function(d) { return [Math.random() * width, Math.random() * height]; });
+
+var voronoi = d3.voronoi()
+    .extent([[-1, -1], [width + 1, height + 1]]);
+
+
+
+var xScale = d3.scaleLinear().domain([0, 1]).range([0, width]);
+var yScale = d3.scaleLinear().domain([0, 1]).range([height, 0]);
+
+// var voronoi = d3.voronoi()
+//   .x(function (d) { return xScale(d.x); })
+//   .y(function (d) { return yScale(d.y); })
+//   .size([width + 1, height + 1])(sites);
+
+// var voronoi = d3.geom.voronoi()
+//     .clipExtent([[0, 0], [width, height]]);
+
+var canvas = d3.select("body").append("canvas")
+    .attr("width", width)
+    .attr("height", height);
+
+d3.select("canvas").on("touchmove mousemove", moved);
+
+var context = canvas.node().getContext("2d");
+
+function pointSampleImage(image, x, y) {
+    var i = (y * width + x) << 2;
+    return d3.rgb(image.data[i + 0], image.data[i + 1], image.data[i + 2]);
+}
+
+function squareSampleImage(image, x, y, r) {
+    var samples = [];
+    for (var col = x - r; col < x + r + 1; col++) {
+        for (var row = y - r; row < y + r + 1; row++) {
+            var i = (row * width + col) << 2;
+            samples.push([image.data[i], image.data[i+1], image.data[i+2]]);
+        }
+    }
+    return d3.rgb(
+        d3.mean(samples, function (sample) {
+            return sample[0];
+        }),
+        d3.mean(samples, function (sample) {
+            return sample[1];
+        }),
+        d3.mean(samples, function (sample) {
+            return sample[2];
+        })
+    );
+}
+
+var image, diagram;
+
+function draw(){
+  image = new Image;
+  image.src = "spring-05.jpg";
+  image.onload = start;
+}
+
+draw();
+
+
+function moved() {
+  // sites[0] = d3.mouse(this);
+  console.log('d3.mouse(this)[0] : ' + d3.mouse(this)[0]);
+  console.log('d3.mouse(this)[1] : ' + d3.mouse(this)[1]);
+
+  
+  var site = diagram.find(d3.mouse(this)[0],d3.mouse(this)[1], 50);
+  if(site !== null){
+    console.log('sites.length 111 : ' + sites.length);
+    console.log('site : ' + site);
+    console.log('site.index : ' + site.index);
+    sites.splice(site.index,1);
+    console.log('sites.length 222 : ' + sites.length);
+    draw();
+  }
+
+ 
+}
+
+function start() {
+  image = new Image;
+  image.src = "spring-05.jpg";
+  context.drawImage(image, 0, 0);
+  image = context.getImageData(0, 0, width, height);
+
+  diagram = voronoi(sites),
+  links = diagram.links(),
+  polygons = diagram.polygons();
+
+  // for (var i = 0; i  < samples.length; i++) {
+  //   var x = Math.floor(samples[i][0]),
+  //       y = Math.floor(samples[i][1]);
+  //   console.log( 'polygons : ' + polygons[i] );
+
+    
+    
+  //   // context.fillStyle = squareSampleImage(image, x, y, 3) + "";
+  //   // context.fillStyle = pointSampleImage(image, x, y) + "";
+   
+  //   //폴리곤
+  //   // context.beginPath();
+  //   // drawCell(polygons[i]);
+  //   // // context.strokeStyle = pointSampleImage(image, x, y) + "";
+  //   // // context.stroke();
+  //   // context.fillStyle = squareSampleImage(image, x, y, 3) + "";
+  //   // context.fill();
+  //   // context.closePath();
+
+  //   // context.moveTo(polygons[i][0][0], polygons[i][0][1]);
+  //   // for (var j = 1, m = polygons[i].length; j < m; ++j) {
+  //   //   context.lineTo(polygons[i][j][0], polygons[i][j][1]);
+  //   // }
+  //   // context.closePath();
+  //   // context.fill();
+
+  //   // 링크
+  //   context.beginPath();
+  //   drawLink(links[i]);
+  //   // context.strokeStyle = "rgba(0,0,0,0.2)";
+  //   context.strokeStyle = pointSampleImage(image, x, y, 3) + "";
+  //   context.stroke();
+  //   context.closePath();
+  // };
+  // 나머지 폴리곤
+  
+  // 첫번재 폴리곤(마우스 폴리곤)
+  context.clearRect(0, 0, width, height);
+  context.beginPath();
+  drawCell(polygons[0]);
+  context.fillStyle = "#f00";
+  context.fill();
+
+  var x, y = 0;
+  for (var i = 0, n = polygons.length; i < n; ++i){
+    context.beginPath();
+    // console.log('sites[i][0] : ' + sites[i][0]);
+    // console.log('sites[i][1] : ' + sites[i][1]);
+    x = Math.floor(sites[i][0]),
+    y = Math.floor(sites[i][1]);
+    // context.fillStyle = pointSampleImage(image, x, y) + "";
+    context.fillStyle = squareSampleImage(image, x, y, 3) + "";
+    drawCell(polygons[i]);
+    context.fill();
+    // context.strokeStyle = pointSampleImage(image, x, y, 3) + "";
+    // context.stroke();
+  };
+  
+
+
+    // 링크
+  // context.beginPath();
+  // for (var i = 0, n = links.length; i < n; ++i) drawLink(links[i]);
+  // context.strokeStyle = "green";
+  // context.stroke();
+
+  // context.beginPath();
+  // for (var i = 1, n = sites.length; i < n; ++i) drawSite(sites[i]);
+  // context.fillStyle = "black";
+  // context.fill();
+  // context.strokeStyle = "yellow";
+  // context.stroke();
+
+  //   voronoi(samples).forEach(function(cell) {
+  //     // console.log('cell : ' + JSON.stringify(cell));
+  //     console.log('cell point : ' + JSON.stringify(cell.point));
+  //     console.log('cell : ' + JSON.stringify(cell[0]));
+  //     var x = Math.floor(cell.point[0]),
+  //         y = Math.floor(cell.point[1]);
+  // //    context.fillStyle = pointSampleImage(image, x, y) + "";
+  //     context.fillStyle = squareSampleImage(image, x, y, 3) + "";
+  //     context.beginPath();
+  //     context.moveTo(cell[0][0], cell[0][1]);
+  //     for (var i = 1, n = cell.length; i < n; ++i){
+  //       context.lineTo(cell[i][0], cell[i][1]);
+  //     };
+  //     context.closePath();
+  //     context.fill();
+  //   });
+}
+
+function drawSite(site) {
+  context.moveTo(site[0] + 2.5, site[1]);
+  context.arc(site[0], site[1], 2.5, 0, 2 * Math.PI, false);
+}
+
+function drawLink(link) {
+  context.moveTo(link.source[0], link.source[1]);
+  context.lineTo(link.target[0], link.target[1]);
+}
+
+function drawCell(cell) {
+  if (!cell) return false;
+  context.moveTo(cell[0][0], cell[0][1]);
+  for (var j = 1, m = cell.length; j < m; ++j) {
+    context.lineTo(cell[j][0], cell[j][1]);
+  }
+  context.closePath();
+  return true;
+}
+
+// Based on https://www.jasondavies.com/poisson-disc/
+function poissonDiscSampler(width, height, radius) {
+  var k = 30, // maximum number of samples before rejection
+      radius2 = radius * radius,
+      R = 3 * radius2,
+      cellSize = radius * Math.SQRT1_2,
+      gridWidth = Math.ceil(width / cellSize),
+      gridHeight = Math.ceil(height / cellSize),
+      grid = new Array(gridWidth * gridHeight),
+      queue = [],
+      queueSize = 0,
+      sampleSize = 0;
+
+  return function() {
+    if (!sampleSize) return sample(Math.random() * width, Math.random() * height);
+
+    // Pick a random existing sample and remove it from the queue.
+    while (queueSize) {
+      var i = Math.random() * queueSize | 0,
+          s = queue[i];
+
+      // Make a new candidate between [radius, 2 * radius] from the existing sample.
+      for (var j = 0; j < k; ++j) {
+        var a = 2 * Math.PI * Math.random(),
+            r = Math.sqrt(Math.random() * R + radius2),
+            x = s[0] + r * Math.cos(a),
+            y = s[1] + r * Math.sin(a);
+
+        // Reject candidates that are outside the allowed extent,
+        // or closer than 2 * radius to any existing sample.
+        if (0 <= x && x < width && 0 <= y && y < height && far(x, y)) return sample(x, y);
+      }
+
+      queue[i] = queue[--queueSize];
+      queue.length = queueSize;
+    }
+  };
+
+  function far(x, y) {
+    var i = x / cellSize | 0,
+        j = y / cellSize | 0,
+        i0 = Math.max(i - 2, 0),
+        j0 = Math.max(j - 2, 0),
+        i1 = Math.min(i + 3, gridWidth),
+        j1 = Math.min(j + 3, gridHeight);
+
+    for (j = j0; j < j1; ++j) {
+      var o = j * gridWidth;
+      for (i = i0; i < i1; ++i) {
+        if (s = grid[o + i]) {
+          var s,
+              dx = s[0] - x,
+              dy = s[1] - y;
+          if (dx * dx + dy * dy < radius2) return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  function sample(x, y) {
+    var s = [x, y];
+    queue.push(s);
+    grid[gridWidth * (y / cellSize | 0) + (x / cellSize | 0)] = s;
+    ++sampleSize;
+    ++queueSize;
+    return s;
+  }
+}
+
+
+</script>
+
+
+<!-- <!DOCTYPE html>
+<meta charset="utf-8">
+<body>
+<script src="http://d3js.org/d3.v4.min.js"></script>
+<script>
+
+var width = 960,
+    height = 500;
+
+var sample = poissonDiscSampler(width, height, 5.45),
+    samples = [],
+    s;
+
+while (s = sample()) samples.push(s);
+
+var voronoi = d3.geom.voronoi()
+    .clipExtent([[0, 0], [width, height]]);
+
+var canvas = d3.select("body").append("canvas")
+    .attr("width", width)
+    .attr("height", height);
+
+var context = canvas.node().getContext("2d");
+
+var image = new Image;
+image.src = "spring-05.jpg";
+image.onload = start;
+
+function pointSampleImage(image, x, y) {
+    var i = (y * width + x) << 2;
+    return d3.rgb(image.data[i + 0], image.data[i + 1], image.data[i + 2]);
+}
+
+function squareSampleImage(image, x, y, r) {
+    var samples = [];
+    for (var col = x - r; col < x + r + 1; col++) {
+        for (var row = y - r; row < y + r + 1; row++) {
+            var i = (row * width + col) << 2;
+            samples.push([image.data[i], image.data[i+1], image.data[i+2]]);
+        }
+    }
+    return d3.rgb(
+        d3.mean(samples, function (sample) {
+            return sample[0];
+        }),
+        d3.mean(samples, function (sample) {
+            return sample[1];
+        }),
+        d3.mean(samples, function (sample) {
+            return sample[2];
+        })
+    );
+}
+
+function start() {
+  context.drawImage(image, 0, 0);
+  image = context.getImageData(0, 0, width, height);
+  voronoi(samples).forEach(function(cell) {
+    var x = Math.floor(cell.point[0]),
+        y = Math.floor(cell.point[1]);
+//    context.fillStyle = pointSampleImage(image, x, y) + "";
+    context.fillStyle = squareSampleImage(image, x, y, 3) + "";
+    context.beginPath();
+    context.moveTo(cell[0][0], cell[0][1]);
+    for (var i = 1, n = cell.length; i < n; ++i) context.lineTo(cell[i][0], cell[i][1]);
+    context.closePath();
+    context.fill();
+  });
+}
+
+// Based on https://www.jasondavies.com/poisson-disc/
+function poissonDiscSampler(width, height, radius) {
+  var k = 30, // maximum number of samples before rejection
+      radius2 = radius * radius,
+      R = 3 * radius2,
+      cellSize = radius * Math.SQRT1_2,
+      gridWidth = Math.ceil(width / cellSize),
+      gridHeight = Math.ceil(height / cellSize),
+      grid = new Array(gridWidth * gridHeight),
+      queue = [],
+      queueSize = 0,
+      sampleSize = 0;
+
+  return function() {
+    if (!sampleSize) return sample(Math.random() * width, Math.random() * height);
+
+    // Pick a random existing sample and remove it from the queue.
+    while (queueSize) {
+      var i = Math.random() * queueSize | 0,
+          s = queue[i];
+
+      // Make a new candidate between [radius, 2 * radius] from the existing sample.
+      for (var j = 0; j < k; ++j) {
+        var a = 2 * Math.PI * Math.random(),
+            r = Math.sqrt(Math.random() * R + radius2),
+            x = s[0] + r * Math.cos(a),
+            y = s[1] + r * Math.sin(a);
+
+        // Reject candidates that are outside the allowed extent,
+        // or closer than 2 * radius to any existing sample.
+        if (0 <= x && x < width && 0 <= y && y < height && far(x, y)) return sample(x, y);
+      }
+
+      queue[i] = queue[--queueSize];
+      queue.length = queueSize;
+    }
+  };
+
+  function far(x, y) {
+    var i = x / cellSize | 0,
+        j = y / cellSize | 0,
+        i0 = Math.max(i - 2, 0),
+        j0 = Math.max(j - 2, 0),
+        i1 = Math.min(i + 3, gridWidth),
+        j1 = Math.min(j + 3, gridHeight);
+
+    for (j = j0; j < j1; ++j) {
+      var o = j * gridWidth;
+      for (i = i0; i < i1; ++i) {
+        if (s = grid[o + i]) {
+          var s,
+              dx = s[0] - x,
+              dy = s[1] - y;
+          if (dx * dx + dy * dy < radius2) return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  function sample(x, y) {
+    var s = [x, y];
+    queue.push(s);
+    grid[gridWidth * (y / cellSize | 0) + (x / cellSize | 0)] = s;
+    ++sampleSize;
+    ++queueSize;
+    return s;
+  }
+}
+
+</script> -->
