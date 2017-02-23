@@ -7,17 +7,18 @@
 var width = 960,
     height = 500;
 
-var sample = poissonDiscSampler(width, height, 10),
+var sample = poissonDiscSampler(width, height, 40),
     samples = [],
     s;
 
 while (s = sample()) samples.push(s);
 
-var sites = d3.range(300)
-    .map(function(d) { return [Math.random() * width, Math.random() * height]; });
+var samples = d3.range(300)
+    .map(function(d) { return [Math.random() * width, Math.random() * height, 0.3]; })
 
 var voronoi = d3.voronoi()
     .extent([[-1, -1], [width + 1, height + 1]]);
+
 
 
 
@@ -66,12 +67,12 @@ function squareSampleImage(image, x, y, r) {
     );
 }
 
-var image, diagram;
+var myImage, diagram;
 
 function draw(){
-  image = new Image;
-  image.src = "spring-05.jpg";
-  image.onload = start;
+  myImage = new Image;
+  myImage.src = "spring-05.jpg";
+  myImage.onload = start;
 }
 
 draw();
@@ -83,26 +84,37 @@ function moved() {
   console.log('d3.mouse(this)[1] : ' + d3.mouse(this)[1]);
 
   
-  var site = diagram.find(d3.mouse(this)[0],d3.mouse(this)[1], 50);
-  if(site !== null){
-    console.log('sites.length 111 : ' + sites.length);
-    console.log('site : ' + site);
-    console.log('site.index : ' + site.index);
-    sites.splice(site.index,1);
-    console.log('sites.length 222 : ' + sites.length);
-    draw();
+  var samp = diagram.find(d3.mouse(this)[0],d3.mouse(this)[1], 50);
+  if(samp !== null){
+    // console.log('sites.length 111 : ' + sites.length);
+    // console.log('site : ' + site);
+    // console.log('site.index : ' + site.index);
+    // sites.splice(site.index,1);
+    console.log('samp.index : ' + samp.index);
+    samples[samp.index][2] = 0;
+    // console.log('sites.length 222 : ' + sites.length);
+    start();
   }
 
  
 }
 
 function start() {
-  image = new Image;
-  image.src = "spring-05.jpg";
-  context.drawImage(image, 0, 0);
-  image = context.getImageData(0, 0, width, height);
+  // context.globalAlpha=0.2;
+  context.drawImage(myImage, 0, 0);
+  // context.restore();context.globalAlpha=0.2;
 
-  diagram = voronoi(sites),
+  // image = new Image;
+  // image.src = "spring-05.jpg";
+  // image.onload = function(){
+  //   context.globalAlpha=0.2;
+  //   context.drawImage(image, 0, 0);
+  //   context.restore();
+  // };
+  
+  imageData = context.getImageData(0, 0, width, height);
+
+  diagram = voronoi(samples),
   links = diagram.links(),
   polygons = diagram.polygons();
 
@@ -113,15 +125,15 @@ function start() {
 
     
     
-  //   // context.fillStyle = squareSampleImage(image, x, y, 3) + "";
-  //   // context.fillStyle = pointSampleImage(image, x, y) + "";
+  //   // context.fillStyle = squareSampleImage(imageData, x, y, 3) + "";
+  //   // context.fillStyle = pointSampleImage(imageData, x, y) + "";
    
   //   //폴리곤
   //   // context.beginPath();
   //   // drawCell(polygons[i]);
-  //   // // context.strokeStyle = pointSampleImage(image, x, y) + "";
+  //   // // context.strokeStyle = pointSampleImage(imageData, x, y) + "";
   //   // // context.stroke();
-  //   // context.fillStyle = squareSampleImage(image, x, y, 3) + "";
+  //   // context.fillStyle = squareSampleImage(imageData, x, y, 3) + "";
   //   // context.fill();
   //   // context.closePath();
 
@@ -136,31 +148,61 @@ function start() {
   //   context.beginPath();
   //   drawLink(links[i]);
   //   // context.strokeStyle = "rgba(0,0,0,0.2)";
-  //   context.strokeStyle = pointSampleImage(image, x, y, 3) + "";
+  //   context.strokeStyle = pointSampleImage(imageData, x, y, 3) + "";
   //   context.stroke();
   //   context.closePath();
   // };
   // 나머지 폴리곤
   
   // 첫번재 폴리곤(마우스 폴리곤)
-  context.clearRect(0, 0, width, height);
-  context.beginPath();
-  drawCell(polygons[0]);
-  context.fillStyle = "#f00";
-  context.fill();
+  // context.clearRect(0, 0, width, height);
+  // context.beginPath();
+  // drawCell(polygons[0]);
+  // context.fillStyle = "#f00";
+  // context.fill();
 
   var x, y = 0;
   for (var i = 0, n = polygons.length; i < n; ++i){
+
     context.beginPath();
+    // context.globalAlpha=0.2;
     // console.log('sites[i][0] : ' + sites[i][0]);
     // console.log('sites[i][1] : ' + sites[i][1]);
-    x = Math.floor(sites[i][0]),
-    y = Math.floor(sites[i][1]);
-    // context.fillStyle = pointSampleImage(image, x, y) + "";
-    context.fillStyle = squareSampleImage(image, x, y, 3) + "";
+    x = Math.floor(samples[i][0]),
+    y = Math.floor(samples[i][1]);
+    // context.fillStyle = pointSampleImage(imageData, x, y) + "";
+    // console.log(squareSampleImage(imageData, x, y, 3));
+    var rgba = squareSampleImage(imageData, x, y, 3);
+    if(typeof samples[i][2] !== 'undefined'){
+      // console.log('sites[i][2] : ' + sites[i][2]);
+      rgba.opacity = samples[i][2];
+    }else{
+      rgba.opacity = 0.8;
+    }
+    context.fillStyle =  rgba + "";
     drawCell(polygons[i]);
     context.fill();
-    // context.strokeStyle = pointSampleImage(image, x, y, 3) + "";
+    context.closePath();
+
+    // var innerIce = d3.range(10).map(function(d) { return [x + 3, y+3]; });
+    // var diagramIn = voronoi(innerIce);
+    // var linksIn = diagram.links();
+    // var polygonsIn = diagram.polygons();
+    // for (var j = 0; j < linksIn.length; j++){
+    //   // context.beginPath();
+    //   context.strokeStyle = '#fff';
+    //   // console.log('linksIn[j].source[0] : ' + linksIn[j].source[0]);
+    //   // console.log('linksIn[j].source[1] : ' + linksIn[j].source[1]);
+    //   // console.log('linksIn[j].target[1] : ' + linksIn[j].target[1]);
+    //   // console.log('linksIn[j].target[1] : ' + linksIn[j].target[1]);
+    //   // context.moveTo(link.source[0], link.source[1]);
+    //   // context.lineTo(link.target[0], link.target[1]);
+    //   drawLink(linksIn[j]);
+    //   context.stroke();
+    // };
+
+    // context.restore();
+    // context.strokeStyle = pointSampleImage(imageData, x, y, 3) + "";
     // context.stroke();
   };
   
@@ -279,7 +321,7 @@ function poissonDiscSampler(width, height, radius) {
   }
 
   function sample(x, y) {
-    var s = [x, y];
+    var s = [x, y,0.7];
     queue.push(s);
     grid[gridWidth * (y / cellSize | 0) + (x / cellSize | 0)] = s;
     ++sampleSize;
