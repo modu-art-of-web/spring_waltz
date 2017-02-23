@@ -70,7 +70,8 @@ var image, diagram;
 
 function draw(){
   image = new Image;
-  image.src = "spring-05.jpg";
+  // image.src = "spring-05.jpg";
+  image.src = "sp3.jpg";
   image.onload = start;
 }
 
@@ -98,7 +99,7 @@ function moved() {
 
 function start() {
   image = new Image;
-  image.src = "spring-05.jpg";
+  image.src = "sp3.jpg";
   context.drawImage(image, 0, 0);
   image = context.getImageData(0, 0, width, height);
 
