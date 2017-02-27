@@ -2,436 +2,672 @@
 <meta charset="utf-8">
 <body>
 <script src="http://d3js.org/d3.v4.min.js"></script>
+<script src="//d3js.org/topojson.v1.min.js"></script>
 <script>
 
-var width = 960,
-    height = 500;
 
-var sample = poissonDiscSampler(width, height, 10),
-    samples = [],
-    s;
+/*
+Audio Visualizer by Raathigeshan.
+http://raathigesh.com/
+*/
+var audioVis;
 
-while (s = sample()) samples.push(s);
+// document.addEventListener("DOMContentLoaded", function(event) { 
+//     audioVis = new AudioVisualizer();
+//     // audioVis.initialize();
+//     // audioVis.createBars();
+//     audioVis.setupAudioProcessing();
+//     audioVis.getAudio();
+//     // audioVis.handleDrop();  
+// });
 
-var sites = d3.range(300)
-    .map(function(d) { return [Math.random() * width, Math.random() * height]; });
 
-var voronoi = d3.voronoi()
-    .extent([[-1, -1], [width + 1, height + 1]]);
+function AudioVisualizer() {
+    //constants
+    this.numberOfBars = 60;
 
+    //Rendering
+    // this.scene;
+    // this.camera;
+    // this.renderer;
+    // this.controls;
 
+    // //bars
+    // this.bars = new Array();
 
-var xScale = d3.scaleLinear().domain([0, 1]).range([0, width]);
-var yScale = d3.scaleLinear().domain([0, 1]).range([height, 0]);
-
-// var voronoi = d3.voronoi()
-//   .x(function (d) { return xScale(d.x); })
-//   .y(function (d) { return yScale(d.y); })
-//   .size([width + 1, height + 1])(sites);
-
-// var voronoi = d3.geom.voronoi()
-//     .clipExtent([[0, 0], [width, height]]);
-
-var canvas = d3.select("body").append("canvas")
-    .attr("width", width)
-    .attr("height", height);
-
-d3.select("canvas").on("touchmove mousemove", moved);
-
-var context = canvas.node().getContext("2d");
-
-function pointSampleImage(image, x, y) {
-    var i = (y * width + x) << 2;
-    return d3.rgb(image.data[i + 0], image.data[i + 1], image.data[i + 2]);
+    //audio
+    this.javascriptNode;
+    this.audioContext;
+    this.sourceBuffer;
+    this.analyser;
 }
+AudioVisualizer.prototype.setupAudioProcessing = function () {
+    //get the audio context
+    this.audioContext = new AudioContext();
 
-function squareSampleImage(image, x, y, r) {
-    var samples = [];
-    for (var col = x - r; col < x + r + 1; col++) {
-        for (var row = y - r; row < y + r + 1; row++) {
-            var i = (row * width + col) << 2;
-            samples.push([image.data[i], image.data[i+1], image.data[i+2]]);
-        }
+    //create the javascript node
+    this.javascriptNode = this.audioContext.createScriptProcessor(2048, 1, 1);
+    this.javascriptNode.connect(this.audioContext.destination);
+
+    //create the source buffer
+    this.sourceBuffer = this.audioContext.createBufferSource();
+
+    //create the analyser node
+    this.analyser = this.audioContext.createAnalyser();
+    this.analyser.smoothingTimeConstant = 0.3;
+    this.analyser.fftSize = 512;
+
+    //connect source to analyser
+    this.sourceBuffer.connect(this.analyser);
+
+    //analyser to speakers
+    this.analyser.connect(this.javascriptNode);
+
+    //connect source to analyser
+    this.sourceBuffer.connect(this.audioContext.destination);
+
+    var that = this;
+
+    //this is where we animates the bars
+    // this.javascriptNode.onaudioprocess = function () {
+
+    //     // get the average for the first channel
+    //     var array = new Uint8Array(that.analyser.frequencyBinCount);
+    //     that.analyser.getByteFrequencyData(array);
+
+    //     //render the scene and update controls
+    //     // audioVis.renderer.render(audioVis.scene, audioVis.camera);
+    //     // audioVis.controls.update();
+
+    //     var step = Math.round(array.length / audioVis.numberOfBars);
+
+    //     // console.log('step : ' + JSON.stringify(step));
+    //     // console.log('array : ' + JSON.stringify(array));
+
+    //     //Iterate through the bars and scale the z axis
+    //     for (var i = 0; i < audioVis.numberOfBars; i++) {
+    //         var value = array[i * step] / 4;
+    //         value = value < 1 ? 1 : value;
+    //         // console.log('value : ' + value);
+    //         // audioVis.bars[i].scale.z = value;
+    //     }
+    // }
+};
+
+//get the default audio from the server
+AudioVisualizer.prototype.getAudio = function () {
+    var request = new XMLHttpRequest();
+    request.open("GET", "spring_waltz.mp3", true);
+    request.responseType = "arraybuffer";
+    request.send();
+    var that = this;
+    request.onload = function () {
+        that.start(request.response);
     }
-    return d3.rgb(
-        d3.mean(samples, function (sample) {
-            return sample[0];
-        }),
-        d3.mean(samples, function (sample) {
-            return sample[1];
-        }),
-        d3.mean(samples, function (sample) {
-            return sample[2];
-        })
-    );
-}
+};
 
-var image, diagram;
+//start the audio processing
+AudioVisualizer.prototype.start = function (buffer) {
+    console.log('buffer : ' + JSON.stringify(buffer));
+    this.audioContext.decodeAudioData(buffer, decodeAudioDataSuccess, decodeAudioDataFailed);
+    var that = this;
 
-function draw(){
-  image = new Image;
-  // image.src = "spring-05.jpg";
-  image.src = "sp3.jpg";
-  image.onload = start;
-}
+    function decodeAudioDataSuccess(decodedBuffer) {
+        that.sourceBuffer.buffer = decodedBuffer;
+        console.log('decodedBuffer : ' + JSON.stringify(decodedBuffer));
+        that.sourceBuffer.start(0);
+    }
 
-draw();
+    function decodeAudioDataFailed() {
+        debugger
+    }
+};
 
+var spwUtils = spwUtils || function() {
+  return{
+      // Based on https://www.jasondavies.com/poisson-disc/
+      poissonDiscSampler : function(width, height, radius) {
+        var k = 30, // maximum number of samples before rejection
+            radius2 = radius * radius,
+            R = 3 * radius2,
+            cellSize = radius * Math.SQRT1_2,
+            gridWidth = Math.ceil(width / cellSize),
+            gridHeight = Math.ceil(height / cellSize),
+            grid = new Array(gridWidth * gridHeight),
+            queue = [],
+            queueSize = 0,
+            sampleSize = 0;
+        return function() {
+          if (!sampleSize) return sample(Math.random() * width, Math.random() * height);
+          // Pick a random existing sample and remove it from the queue.
+          while (queueSize) {
+            var i = Math.random() * queueSize | 0,
+                s = queue[i];
+            // Make a new candidate between [radius, 2 * radius] from the existing sample.
+            for (var j = 0; j < k; ++j) {
+              var a = 2 * Math.PI * Math.random(),
+                  r = Math.sqrt(Math.random() * R + radius2),
+                  x = s[0] + r * Math.cos(a),
+                  y = s[1] + r * Math.sin(a);
+              // Reject candidates that are outside the allowed extent,
+              // or closer than 2 * radius to any existing sample.
+              if (0 <= x && x < width && 0 <= y && y < height && far(x, y)) return sample(x, y);
+            }
+            queue[i] = queue[--queueSize];
+            queue.length = queueSize;
+          }
+        };
+        function far(x, y) {
+          var i = x / cellSize | 0,
+              j = y / cellSize | 0,
+              i0 = Math.max(i - 2, 0),
+              j0 = Math.max(j - 2, 0),
+              i1 = Math.min(i + 3, gridWidth),
+              j1 = Math.min(j + 3, gridHeight);
+          for (j = j0; j < j1; ++j) {
+            var o = j * gridWidth;
+            for (i = i0; i < i1; ++i) {
+              if (s = grid[o + i]) {
+                var s,
+                    dx = s[0] - x,
+                    dy = s[1] - y;
+                if (dx * dx + dy * dy < radius2) return false;
+              }
+            }
+          }
+          return true;
+        }
+        function sample(x, y) {
+          var s = [x, y, 0.7, 0, 0];
+          queue.push(s);
+          grid[gridWidth * (y / cellSize | 0) + (x / cellSize | 0)] = s;
+          ++sampleSize;
+          ++queueSize;
+          return s;
+        }
+      },
+      pointSampleImage : function(image, x, y, width) {
+          var i = (y * width + x) << 2;
+          return d3.rgb(image.data[i + 0], image.data[i + 1], image.data[i + 2]);
+      },
+      squareSampleImage : function(image, x, y, r, width) {
+          var samples = [];
+          for (var col = x - r; col < x + r + 1; col++) {
+              for (var row = y - r; row < y + r + 1; row++) {
+                  var i = (row * width + col) << 2;
+                  samples.push([image.data[i], image.data[i+1], image.data[i+2]]);
+              }
+          }
+          return d3.rgb(
+              d3.mean(samples, function (sample) {
+                  return sample[0];
+              }),
+              d3.mean(samples, function (sample) {
+                  return sample[1];
+              }),
+              d3.mean(samples, function (sample) {
+                  return sample[2];
+              })
+          );
+      },
+      computeTopology : function(diagram) {
+        var cells = diagram.cells,
+            arcs = [],
+            arcIndex = -1,
+            arcIndexByEdge = {};
 
-function moved() {
-  // sites[0] = d3.mouse(this);
-  console.log('d3.mouse(this)[0] : ' + d3.mouse(this)[0]);
-  console.log('d3.mouse(this)[1] : ' + d3.mouse(this)[1]);
+        return {
+          objects: {
+            voronoi: {
+              type: "GeometryCollection",
+              geometries: cells.map(function(cell) {
+                var cell,
+                    site = cell.site,
+                    halfedges = cell.halfedges,
+                    cellArcs = [],
+                    clipArc;
 
-  
-  var site = diagram.find(d3.mouse(this)[0],d3.mouse(this)[1], 50);
-  if(site !== null){
-    console.log('sites.length 111 : ' + sites.length);
-    console.log('site : ' + site);
-    console.log('site.index : ' + site.index);
-    sites.splice(site.index,1);
-    console.log('sites.length 222 : ' + sites.length);
-    draw();
-  }
+                halfedges.forEach(function(halfedge) {
+                  var edge = diagram.edges[halfedge];
+                  if (edge.right) {
+                    var l = edge.left.index,
+                        r = edge.right.index,
+                        k = l + "," + r,
+                        i = arcIndexByEdge[k];
+                    if (i == null) arcs[i = arcIndexByEdge[k] = ++arcIndex] = edge;
+                    cellArcs.push(site === edge.left ? i : ~i);
+                    clipArc = null;
+                  } else if (clipArc) { // Coalesce border edges.
+                    if (edge.left) edge = edge.slice(); // Copy-on-write.
+                    clipArc.push(edge[1]);
+                  } else {
+                    arcs[++arcIndex] = clipArc = edge;
+                    cellArcs.push(arcIndex);
+                  }
+                });
 
- 
-}
+                // Ensure the last point in the polygon is identical to the first point.
+                var firstArcIndex = cellArcs[0],
+                    lastArcIndex = cellArcs[cellArcs.length - 1],
+                    firstArc = arcs[firstArcIndex < 0 ? ~firstArcIndex : firstArcIndex],
+                    lastArc = arcs[lastArcIndex < 0 ? ~lastArcIndex : lastArcIndex];
+                lastArc[lastArcIndex < 0 ? 0 : lastArc.length - 1] = firstArc[firstArcIndex < 0 ? firstArc.length - 1 : 0].slice();
 
-function start() {
-  image = new Image;
-  image.src = "sp3.jpg";
-  context.drawImage(image, 0, 0);
-  image = context.getImageData(0, 0, width, height);
+                return {
+                  type: "Polygon",
+                  data: site.data,
+                  arcs: [cellArcs]
+                };
+              })
+            }
+          },
+          arcs: arcs
+        };
+      },
+      renderMultiLineString : function(context, line) {
+        line.coordinates.forEach(function(line) {
+          line.forEach(function(point, i) {
+            if (i) context.lineTo(point[0], point[1]);
+            else context.moveTo(point[0], point[1]);
+          });
+        });
+      },
+      renderMultiPolygon : function (context, polygon) {
+        polygon.coordinates.forEach(function(polygon) {
+          polygon.forEach(function(ring) {
+            ring.forEach(function(point, i) {
+              if (i) context.lineTo(point[0], point[1]);
+              else context.moveTo(point[0], point[1]);
+            });
+          });
+        });
+      },
 
-  diagram = voronoi(sites),
-  links = diagram.links(),
-  polygons = diagram.polygons();
+      // A horrible brute-force algorithm for determining the largest circle that can
+      // fit inside a convex polygon. For each distinct set of three sides of the
+      // polygon, compute the tangent circle. Then reduce the circle’s radius against
+      // the remaining sides of the polygon.
+      polygonIncircle: function(points) {
+        var circle = {radius: 0};
 
-  // for (var i = 0; i  < samples.length; i++) {
-  //   var x = Math.floor(samples[i][0]),
-  //       y = Math.floor(samples[i][1]);
-  //   console.log( 'polygons : ' + polygons[i] );
+        for (var i = 0, n = points.length; i < n; ++i) {
+          var pi0 = points[i],
+              pi1 = points[(i + 1) % n];
+          for (var j = i + 1; j < n; ++j) {
+            var pj0 = points[j],
+                pj1 = points[(j + 1) % n],
+                pij = j === i + 1 ? pj0 : this.lineLineIntersection(pi0[0], pi0[1], pi1[0], pi1[1], pj0[0], pj0[1], pj1[0], pj1[1]);
+            search: for (var k = j + 1; k < n; ++k) {
+              var pk0 = points[k],
+                  pk1 = points[(k + 1) % n],
+                  pik = this.lineLineIntersection(pi0[0], pi0[1], pi1[0], pi1[1], pk0[0], pk0[1], pk1[0], pk1[1]),
+                  pjk = k === j + 1 ? pk0 : this.lineLineIntersection(pj0[0], pj0[1], pj1[0], pj1[1], pk0[0], pk0[1], pk1[0], pk1[1]),
+                  candidate = this.triangleIncircle(pij[0], pij[1], pik[0], pik[1], pjk[0], pjk[1]),
+                  radius = candidate.radius;
 
-    
-    
-  //   // context.fillStyle = squareSampleImage(image, x, y, 3) + "";
-  //   // context.fillStyle = pointSampleImage(image, x, y) + "";
-   
-  //   //폴리곤
-  //   // context.beginPath();
-  //   // drawCell(polygons[i]);
-  //   // // context.strokeStyle = pointSampleImage(image, x, y) + "";
-  //   // // context.stroke();
-  //   // context.fillStyle = squareSampleImage(image, x, y, 3) + "";
-  //   // context.fill();
-  //   // context.closePath();
+              for (var l = 0; l < n; ++l) {
+                var pl0 = points[l],
+                    pl1 = points[(l + 1) % n],
+                    r = this.pointLineDistance(candidate[0], candidate[1], pl0[0], pl0[1], pl1[0], pl1[1]);
+                if (r < circle.radius) continue search;
+                if (r < radius) radius = r;
+              }
 
-  //   // context.moveTo(polygons[i][0][0], polygons[i][0][1]);
-  //   // for (var j = 1, m = polygons[i].length; j < m; ++j) {
-  //   //   context.lineTo(polygons[i][j][0], polygons[i][j][1]);
-  //   // }
-  //   // context.closePath();
-  //   // context.fill();
+              circle = candidate;
+              circle.radius = radius;
+            }
+          }
+        }
 
-  //   // 링크
-  //   context.beginPath();
-  //   drawLink(links[i]);
-  //   // context.strokeStyle = "rgba(0,0,0,0.2)";
-  //   context.strokeStyle = pointSampleImage(image, x, y, 3) + "";
-  //   context.stroke();
-  //   context.closePath();
-  // };
-  // 나머지 폴리곤
-  
-  // 첫번재 폴리곤(마우스 폴리곤)
-  context.clearRect(0, 0, width, height);
-  context.beginPath();
-  drawCell(polygons[0]);
-  context.fillStyle = "#f00";
-  context.fill();
+        return circle;
+      },
 
-  var x, y = 0;
-  for (var i = 0, n = polygons.length; i < n; ++i){
+      // Returns the incircle of the triangle 012.
+      triangleIncircle: function(x0, y0, x1, y1, x2, y2) {
+        var x01 = x0 - x1, y01 = y0 - y1,
+            x02 = x0 - x2, y02 = y0 - y2,
+            x12 = x1 - x2, y12 = y1 - y2,
+            l01 = Math.sqrt(x01 * x01 + y01 * y01),
+            l02 = Math.sqrt(x02 * x02 + y02 * y02),
+            l12 = Math.sqrt(x12 * x12 + y12 * y12),
+            k0 = l01 / (l01 + l02),
+            k1 = l12 / (l12 + l01),
+            center = this.lineLineIntersection(x0, y0, x1 - k0 * x12, y1 - k0 * y12, x1, y1, x2 + k1 * x02, y2 + k1 * y02);
+        center.radius = Math.sqrt((l02 + l12 - l01) * (l12 + l01 - l02) * (l01 + l02 - l12) / (l01 + l02 + l12)) / 2;
+        return center;
+      },
+
+      // Returns the intersection of the infinite lines 01 and 23.
+      lineLineIntersection: function(x0, y0, x1, y1, x2, y2, x3, y3) {
+        var x02 = x0 - x2, y02 = y0 - y2,
+            x10 = x1 - x0, y10 = y1 - y0,
+            x32 = x3 - x2, y32 = y3 - y2,
+            t = (x32 * y02 - y32 * x02) / (y32 * x10 - x32 * y10);
+        return [x0 + t * x10, y0 + t * y10];
+      },
+
+      // Returns the signed distance from point 0 to the infinite line 12.
+      pointLineDistance: function(x0, y0, x1, y1, x2, y2) {
+        var x21 = x2 - x1, y21 = y2 - y1;
+        return (y21 * x0 - x21 * y0 + x2 * y1 - y2 * x1) / Math.sqrt(y21 * y21 + x21 * x21);
+      }
+    };
+}();
+
+var springWaltz = springWaltz || {
+  width : 0,
+  height : 0,
+  backImgaeSrc : '../sp3.jpg',
+  backImg : {},
+  imageData : {},
+  sampleRadius : 50,
+  sample : {},
+  samples : [],
+  s : {},
+  canvas : {},
+  context : {},
+  voronoi : {},
+  diagram : {},
+  links : {},
+  polygons : {},
+  angle : 0,
+  audioVis : {},
+  audioNode : {},
+  initialize : function(){
+    this.initCanvas();
+    this.sampling();
+    this.initVoronoi();
+    this.imageLoad();
+    this.startAudio();
+    this.start();
+  },
+  startAudio : function(){
+    var that = this;
+    that.audioVis = new AudioVisualizer();
+    that.audioVis.setupAudioProcessing();
+    that.audioVis.getAudio();
+    // that.audioNode.onaudioprocess = function () {
+
+    //     // get the average for the first channel
+    //     var array = new Uint8Array(that.analyser.frequencyBinCount);
+    //     that.analyser.getByteFrequencyData(array);
+
+    //     //render the scene and update controls
+    //     // that.audioVis.renderer.render(that.audioVis.scene, that.audioVis.camera);
+    //     // that.audioVis.controls.update();
+
+    //     var step = Math.round(array.length / that.audioVis.numberOfBars);
+
+    //     // console.log('step : ' + JSON.stringify(step));
+    //     // console.log('array : ' + JSON.stringify(array));
+
+    //     //Iterate through the bars and scale the z axis
+    //     for (var i = 0; i < that.audioVis.numberOfBars; i++) {
+    //         var value = array[i * step] / 4;
+    //         value = value < 1 ? 1 : value;
+    //         console.log('value : ' + value);
+    //         // that.audioVis.bars[i].scale.z = value;
+    //     }
+    // }
+  },
+  initCanvas : function(){
+    this.width = window.innerWidth;
+    this.height = window.innerHeight;
+    // this.initCanvas();
+    this.canvas = d3.select("body").append("canvas")
+        .attr("width", this.width)
+        .attr("height", this.height);
+
+    d3.select("canvas").on("touchmove mousemove", this.mousemoved);
+    this.context = this.canvas.node().getContext("2d");
+  },
+  initVoronoi : function(){
+    this.voronoi = d3.voronoi().extent([[-1, -1], [this.width + 1, this.height + 1]]);
+    this.diagram = this.voronoi(this.samples);
+    this.links = this.diagram.links();
+    this.polygons = this.diagram.polygons();
+
+    // this.diagram.find = this.diagramFind;
+  },
+  sampling : function(){
+    this.sample = spwUtils.poissonDiscSampler(this.width, this.height, this.sampleRadius);
+    while (this.s = this.sample()) this.samples.push(this.s);
+  },
+  mousemoved : function() {
+    console.log('d3.mouse(this)[0] : ' + d3.mouse(this)[0]);
+    console.log('d3.mouse(this)[1] : ' + d3.mouse(this)[1]);
+
+    var samp = springWaltz.diagramFind(d3.mouse(this)[0],d3.mouse(this)[1], 50);
+    if(typeof samp !== 'undefined' && samp !== null){
+      console.log('samp.index : ' + samp.index);
+      springWaltz.samples[samp.index][2] = 0;
+      springWaltz.start();
+    }
+  },
+  imageLoad : function(){
+    this.backImgae = new Image;
+    this.backImgae.src = this.backImgaeSrc;
+    // this.backImgae.onload = this.start;
+  },
+  start : function(){
+    this.context.drawImage(this.backImgae, 0, 0);
+    this.imageData = this.context.getImageData(0, 0, this.width, this.height);
+    // this.particleStart();
+    this.drawVoro();
+  },
+  particleStart : function(){
+    console.log('aaa');
+    var samples = this.samples;
+    var width = this.width;
+    var height = this.height;
+    var imageData = this.imageData;
+    var width = this.width;
+    var polygons = this.polygons;
+    for (var i = 0; i < samples.length; ++i) {
+      var p = samples[i];
+      p[0] += p[3]; if (p[0] < 0) p[0] = p[3] *= -1; else if (p[0] > width) p[0] = width + (p[3] *= -1);
+      p[1] += p[4]; if (p[1] < 0) p[1] = p[4] *= -1; else if (p[1] > height) p[1] = height + (p[4] *= -1);
+      p[3] += 0.1 * (Math.random() - 0.5) - 0.01 * p[3];
+      p[4] += 0.1 * (Math.random() - 0.5) - 0.01 * p[4];
+    }
+
+    var topology = spwUtils.computeTopology(this.voronoi(samples));
+
+    // context.clearRect(0, 0, width, height);
+
+    var context = this.context;
     context.beginPath();
-    // console.log('sites[i][0] : ' + sites[i][0]);
-    // console.log('sites[i][1] : ' + sites[i][1]);
-    x = Math.floor(sites[i][0]),
-    y = Math.floor(sites[i][1]);
-    // context.fillStyle = pointSampleImage(image, x, y) + "";
-    context.fillStyle = squareSampleImage(image, x, y, 3) + "";
-    drawCell(polygons[i]);
+    spwUtils.renderMultiLineString(context, topojson.mesh(topology, topology.objects.voronoi, function(a, b) { return a !== b; }));
+    // context.strokeStyle = "rgba(0,0,0,0.4)";
+    context.strokeStyle = "rgba(255,255,255,0.8)";
+    context.lineWidth = 0.5;
+    context.stroke();
+
+    samples.forEach(function(p, i) {
+      context.beginPath();
+      context.arc(p[0], p[1], 2.5, 0, 2 * Math.PI);
+      // context.fillStyle = i & 1 ? "rgba(255,0,0,1)" : "rgba(0,0,0,0.6)";
+      var x = Math.floor(samples[i][0]);
+      var y = Math.floor(samples[i][1]);
+      // context.fillStyle = pointSampleImage(imageData, x, y) + "";
+      // console.log(squareSampleImage(imageData, x, y, 3));
+      var rgba = spwUtils.squareSampleImage(imageData, x, y, 3, width);
+      if(typeof samples[i][2] !== 'undefined'){
+        rgba.opacity = samples[i][2];
+      }else{
+        rgba.opacity = 0.8;
+      }
+      context.fillStyle =  rgba + "";
+      if(polygons[i].background !== 'undefined'){
+        context.fillStyle =  polygons[i].background;
+      };
+
+      // context.fillStyle = i & 1 ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.6)";
+      context.fill();
+    });
+
+    context.beginPath();
+    spwUtils.renderMultiPolygon(context, topojson.merge(topology, topology.objects.voronoi.geometries.filter(function(d, i) { 
+      return i & 1; 
+    })));
+    // context.fillStyle = "rgba(255,0,0,0.1)";
+    context.fillStyle = "rgba(255,255,255,0.5)";
     context.fill();
-    // context.strokeStyle = pointSampleImage(image, x, y, 3) + "";
+    context.lineWidth = 1.5;
+    context.lineJoin = "round";
+    // context.strokeStyle = "rgba(255,0,0,1)";
+    context.strokeStyle = "rgba(255,255,255,1)";
+    context.stroke();
+  },
+  drawVoro : function(){
+    var x, y = 0;
+    var that = this;
+    var context = that.context;
+    var samples = that.samples;
+    var polygons = that.polygons;
+    var imageData = that.imageData;
+
+    for (var i = 0, n = polygons.length; i < n; ++i){
+      context.beginPath();
+
+      x = Math.floor(samples[i][0]),
+      y = Math.floor(samples[i][1]);
+
+
+
+      context.beginPath();
+      that.drawPolygonIncircle(samples[i], -2.5);
+      context.fillStyle = "#ddd";
+      context.fill();
+      // context.fillStyle = pointSampleImage(imageData, x, y) + "";
+      // console.log(squareSampleImage(imageData, x, y, 3));
+      var rgba = spwUtils.squareSampleImage(imageData, x, y, 3);
+      if(typeof samples[i][2] !== 'undefined'){
+        rgba.opacity = samples[i][2];
+      }else{
+        rgba.opacity = 0.8;
+      }
+      context.fillStyle =  rgba + "";
+      if(polygons[i].background !== 'undefined'){
+        context.fillStyle =  polygons[i].background;
+      }
+      that.drawCell(polygons[i]);
+      context.strokeStyle =  "#fff";
+      context.stroke();
+      context.fill();
+      context.closePath();
+
+
+    };
+
+    context.beginPath();
+    polygons.forEach(function(cell) { that.drawPolygonIncircle(cell, -2.5); });
+    context.strokeStyle = "#ddd";
+    context.stroke();
+
+    
+    // // 링크
+    // context.beginPath();
+    // for (var i = 0, n = links.length; i < n; ++i) drawLink(links[i]);
+    // context.strokeStyle = "#fff";
     // context.stroke();
-  };
-  
+    // context.beginPath();
 
-
-    // 링크
-  // context.beginPath();
-  // for (var i = 0, n = links.length; i < n; ++i) drawLink(links[i]);
-  // context.strokeStyle = "green";
-  // context.stroke();
-
-  // context.beginPath();
-  // for (var i = 1, n = sites.length; i < n; ++i) drawSite(sites[i]);
-  // context.fillStyle = "black";
-  // context.fill();
-  // context.strokeStyle = "yellow";
-  // context.stroke();
-
-  //   voronoi(samples).forEach(function(cell) {
-  //     // console.log('cell : ' + JSON.stringify(cell));
-  //     console.log('cell point : ' + JSON.stringify(cell.point));
-  //     console.log('cell : ' + JSON.stringify(cell[0]));
-  //     var x = Math.floor(cell.point[0]),
-  //         y = Math.floor(cell.point[1]);
-  // //    context.fillStyle = pointSampleImage(image, x, y) + "";
-  //     context.fillStyle = squareSampleImage(image, x, y, 3) + "";
-  //     context.beginPath();
-  //     context.moveTo(cell[0][0], cell[0][1]);
-  //     for (var i = 1, n = cell.length; i < n; ++i){
-  //       context.lineTo(cell[i][0], cell[i][1]);
-  //     };
-  //     context.closePath();
-  //     context.fill();
-  //   });
-}
-
-function drawSite(site) {
-  context.moveTo(site[0] + 2.5, site[1]);
-  context.arc(site[0], site[1], 2.5, 0, 2 * Math.PI, false);
-}
-
-function drawLink(link) {
-  context.moveTo(link.source[0], link.source[1]);
-  context.lineTo(link.target[0], link.target[1]);
-}
-
-function drawCell(cell) {
-  if (!cell) return false;
-  context.moveTo(cell[0][0], cell[0][1]);
-  for (var j = 1, m = cell.length; j < m; ++j) {
-    context.lineTo(cell[j][0], cell[j][1]);
-  }
-  context.closePath();
-  return true;
-}
-
-// Based on https://www.jasondavies.com/poisson-disc/
-function poissonDiscSampler(width, height, radius) {
-  var k = 30, // maximum number of samples before rejection
-      radius2 = radius * radius,
-      R = 3 * radius2,
-      cellSize = radius * Math.SQRT1_2,
-      gridWidth = Math.ceil(width / cellSize),
-      gridHeight = Math.ceil(height / cellSize),
-      grid = new Array(gridWidth * gridHeight),
-      queue = [],
-      queueSize = 0,
-      sampleSize = 0;
-
-  return function() {
-    if (!sampleSize) return sample(Math.random() * width, Math.random() * height);
-
-    // Pick a random existing sample and remove it from the queue.
-    while (queueSize) {
-      var i = Math.random() * queueSize | 0,
-          s = queue[i];
-
-      // Make a new candidate between [radius, 2 * radius] from the existing sample.
-      for (var j = 0; j < k; ++j) {
-        var a = 2 * Math.PI * Math.random(),
-            r = Math.sqrt(Math.random() * R + radius2),
-            x = s[0] + r * Math.cos(a),
-            y = s[1] + r * Math.sin(a);
-
-        // Reject candidates that are outside the allowed extent,
-        // or closer than 2 * radius to any existing sample.
-        if (0 <= x && x < width && 0 <= y && y < height && far(x, y)) return sample(x, y);
-      }
-
-      queue[i] = queue[--queueSize];
-      queue.length = queueSize;
+    // //사이트
+    // for (var i = 1, n = samples.length; i < n; ++i) drawSite(samples[i]);
+    // context.fillStyle = "black";
+    // context.fill();
+    // context.strokeStyle = "yellow";
+    // context.stroke();
+  },
+  drawPolygonIncircle : function(points, offsetRadius) {
+    var context = this.context;
+    var circle = spwUtils.polygonIncircle(points),
+        radius = circle.radius + offsetRadius;
+    if (radius > 0) {
+      context.moveTo(circle[0] + radius, circle[1]);
+      context.arc(circle[0], circle[1], radius, 0, 2 * Math.PI);
     }
-  };
-
-  function far(x, y) {
-    var i = x / cellSize | 0,
-        j = y / cellSize | 0,
-        i0 = Math.max(i - 2, 0),
-        j0 = Math.max(j - 2, 0),
-        i1 = Math.min(i + 3, gridWidth),
-        j1 = Math.min(j + 3, gridHeight);
-
-    for (j = j0; j < j1; ++j) {
-      var o = j * gridWidth;
-      for (i = i0; i < i1; ++i) {
-        if (s = grid[o + i]) {
-          var s,
-              dx = s[0] - x,
-              dy = s[1] - y;
-          if (dx * dx + dy * dy < radius2) return false;
-        }
-      }
+  },
+  drawSite:function(site) {
+    var context = this.context;
+    context.moveTo(site[0] + 2.5, site[1]);
+    context.arc(site[0], site[1], 2.5, 0, 2 * Math.PI, false);
+  },
+  drawLink:function(link) {
+    var context = this.context;
+    context.moveTo(link.source[0], link.source[1]);
+    context.lineTo(link.target[0], link.target[1]);
+  },
+  drawCell:function(cell) {
+    var context = this.context;
+    if (!cell) return false;
+    context.moveTo(cell[0][0], cell[0][1]);
+    for (var j = 1, m = cell.length; j < m; ++j) {
+      context.lineTo(cell[j][0], cell[j][1]);
     }
-
+    context.closePath();
     return true;
-  }
+  },
+  diagramFind : function(x, y, radius){
+    console.log('find');
+    var that = this;
+    that.polygons = that.diagram.polygons();
+    // var polygons = that.polygons;
+    var i, next = that.diagram.find.found || Math.floor(Math.random() * that.diagram.cells.length);
+    var cell = that.diagram.cells[next] || that.diagram.cells[next=0];
+    var dx = x - cell.site[0], 
+        dy = y - cell.site[1],
+        dist = dx*dx + dy*dy;
 
-  function sample(x, y) {
-    var s = [x, y];
-    queue.push(s);
-    grid[gridWidth * (y / cellSize | 0) + (x / cellSize | 0)] = s;
-    ++sampleSize;
-    ++queueSize;
-    return s;
-  }
-}
+    do {
+      cell = that.diagram.cells[i=next];
+      next = null;
+      // polygon._groups[0][i].setAttribute('fill', '#f5a61d');
+      that.polygons[i].background = 'red';
+      // angle += 10;
+      // for(var j =0; j <that.polygons[i].length; j++){
+      //   that.polygons[i][j][0] += Math.cos(angle) * 10;
+      //   that.polygons[i][j][1] += Math.sin(angle) * 10;
+      // }
+      cell.halfedges.forEach(function(e) {
+        var edge = that.diagram.edges[e];
+        var ea = edge.left;
+        if (ea === cell.site || !ea) {
+          ea = edge.right;
+        }
+        if (ea){
+          console.log('ea.index : ' + ea.index);
+          if( that.polygons[ea.index].background != 'red'){
+            for(var j =0; j <that.polygons[ea.index].length; j++){
+              // that.polygons[ea.index][j] = resample(that.polygons[ea.index][j]);
+              // that.polygons[ea.index][j][0] += Math.random() < 0.5 ? -1 : 1;
+              // that.polygons[ea.index][j][1] += Math.random() < 0.5 ? -1 : 1;
+            }
+            that.polygons[ea.index].background = 'green';
+          };
+          // if (polygon._groups[0][ea.index].getAttribute('fill') != '#f5a61d')
+          // polygon._groups[0][ea.index].setAttribute('fill', '#fbe8ab');
+          var dx = x - ea[0],
+              dy = y - ea[1],
+              ndist = dx*dx + dy*dy;
+          if (ndist < dist){
+            dist = ndist;
+            next = ea.index;
+            return;
+          }
+        }
+      });
+
+    } while (next !== null);
+
+    that.diagram.find.found = i;
+    if (!radius || dist < radius * radius) return cell.site;
+  },
+};
+
+springWaltz.initialize();
 
 
 </script>
 
-
-<!-- <!DOCTYPE html>
-<meta charset="utf-8">
-<body>
-<script src="http://d3js.org/d3.v4.min.js"></script>
-<script>
-
-var width = 960,
-    height = 500;
-
-var sample = poissonDiscSampler(width, height, 5.45),
-    samples = [],
-    s;
-
-while (s = sample()) samples.push(s);
-
-var voronoi = d3.geom.voronoi()
-    .clipExtent([[0, 0], [width, height]]);
-
-var canvas = d3.select("body").append("canvas")
-    .attr("width", width)
-    .attr("height", height);
-
-var context = canvas.node().getContext("2d");
-
-var image = new Image;
-image.src = "spring-05.jpg";
-image.onload = start;
-
-function pointSampleImage(image, x, y) {
-    var i = (y * width + x) << 2;
-    return d3.rgb(image.data[i + 0], image.data[i + 1], image.data[i + 2]);
-}
-
-function squareSampleImage(image, x, y, r) {
-    var samples = [];
-    for (var col = x - r; col < x + r + 1; col++) {
-        for (var row = y - r; row < y + r + 1; row++) {
-            var i = (row * width + col) << 2;
-            samples.push([image.data[i], image.data[i+1], image.data[i+2]]);
-        }
-    }
-    return d3.rgb(
-        d3.mean(samples, function (sample) {
-            return sample[0];
-        }),
-        d3.mean(samples, function (sample) {
-            return sample[1];
-        }),
-        d3.mean(samples, function (sample) {
-            return sample[2];
-        })
-    );
-}
-
-function start() {
-  context.drawImage(image, 0, 0);
-  image = context.getImageData(0, 0, width, height);
-  voronoi(samples).forEach(function(cell) {
-    var x = Math.floor(cell.point[0]),
-        y = Math.floor(cell.point[1]);
-//    context.fillStyle = pointSampleImage(image, x, y) + "";
-    context.fillStyle = squareSampleImage(image, x, y, 3) + "";
-    context.beginPath();
-    context.moveTo(cell[0][0], cell[0][1]);
-    for (var i = 1, n = cell.length; i < n; ++i) context.lineTo(cell[i][0], cell[i][1]);
-    context.closePath();
-    context.fill();
-  });
-}
-
-// Based on https://www.jasondavies.com/poisson-disc/
-function poissonDiscSampler(width, height, radius) {
-  var k = 30, // maximum number of samples before rejection
-      radius2 = radius * radius,
-      R = 3 * radius2,
-      cellSize = radius * Math.SQRT1_2,
-      gridWidth = Math.ceil(width / cellSize),
-      gridHeight = Math.ceil(height / cellSize),
-      grid = new Array(gridWidth * gridHeight),
-      queue = [],
-      queueSize = 0,
-      sampleSize = 0;
-
-  return function() {
-    if (!sampleSize) return sample(Math.random() * width, Math.random() * height);
-
-    // Pick a random existing sample and remove it from the queue.
-    while (queueSize) {
-      var i = Math.random() * queueSize | 0,
-          s = queue[i];
-
-      // Make a new candidate between [radius, 2 * radius] from the existing sample.
-      for (var j = 0; j < k; ++j) {
-        var a = 2 * Math.PI * Math.random(),
-            r = Math.sqrt(Math.random() * R + radius2),
-            x = s[0] + r * Math.cos(a),
-            y = s[1] + r * Math.sin(a);
-
-        // Reject candidates that are outside the allowed extent,
-        // or closer than 2 * radius to any existing sample.
-        if (0 <= x && x < width && 0 <= y && y < height && far(x, y)) return sample(x, y);
-      }
-
-      queue[i] = queue[--queueSize];
-      queue.length = queueSize;
-    }
-  };
-
-  function far(x, y) {
-    var i = x / cellSize | 0,
-        j = y / cellSize | 0,
-        i0 = Math.max(i - 2, 0),
-        j0 = Math.max(j - 2, 0),
-        i1 = Math.min(i + 3, gridWidth),
-        j1 = Math.min(j + 3, gridHeight);
-
-    for (j = j0; j < j1; ++j) {
-      var o = j * gridWidth;
-      for (i = i0; i < i1; ++i) {
-        if (s = grid[o + i]) {
-          var s,
-              dx = s[0] - x,
-              dy = s[1] - y;
-          if (dx * dx + dy * dy < radius2) return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
-  function sample(x, y) {
-    var s = [x, y];
-    queue.push(s);
-    grid[gridWidth * (y / cellSize | 0) + (x / cellSize | 0)] = s;
-    ++sampleSize;
-    ++queueSize;
-    return s;
-  }
-}
-
-</script> -->
