@@ -76,7 +76,7 @@ AudioVisualizer.prototype.setupAudioProcessing = function () {
 //get the default audio from the server
 AudioVisualizer.prototype.getAudio = function () {
     var request = new XMLHttpRequest();
-    request.open("GET", "resources/musics/spring_waltz.mp3", true);
+    request.open("GET", "resources/audios/spring_waltz.mp3", true);
     request.responseType = "arraybuffer";
     request.send();
     var that = this;

@@ -139,14 +139,7 @@ var springWaltz = springWaltz || {
       var dx = a[0] - b[0], dy = a[1] - b[1];
       return Math.sqrt(dx * dx + dy * dy);
     };
-    function clone(obj) {
-        if (null == obj || "object" != typeof obj) return obj;
-        var copy = obj.constructor();
-        for (var attr in obj) {
-            if (obj.hasOwnProperty(attr)) copy[attr] = obj[attr];
-        }
-        return copy;
-    };
+
     var test = JSON.parse(JSON.stringify(polygons));
     var random = Math.floor((Math.random() * 10) + 1);
     for (var i = 0; i < 5; ++i) {
@@ -162,8 +155,78 @@ var springWaltz = springWaltz || {
         cell.push(p2);
 
         var rgba = spwUtils.squareSampleImage(imageData, p0[0], p0[1], 3, width);
-        rgba.opacity =  Math.random()-0.7;
-        context.strokeStyle =  rgba + "";
+        rgba.opacity = Math.random();
+        // context.strokeStyle =  rgba + "";
+        // context.stroke();
+
+        var rgba1 = spwUtils.squareSampleImage(imageData, p1[0], p1[1], 3, width);
+        var rgba2 = spwUtils.squareSampleImage(imageData, p2[0], p2[1], 3, width);
+        var randomOpa = Math.random()-0.7;
+        rgba1.opacity = randomOpa;
+        rgba2.opacity = randomOpa;
+        var grd=context.createLinearGradient(p1[0],p1[1],p2[0],p2[1]);
+        grd.addColorStop(0,rgba1 + "");
+        grd.addColorStop(1,rgba2 + "");
+        context.fillStyle=grd;
+        context.fill();
+        context.closePath();
+      });
+      // context.fillStyle = "#" + formatHex(i) + "0000";
+      // context.fill();
+      // context.strokeStyle = "#" + formatHex(i+100) + "0000";
+      // context.strokeStyle = "#fff";
+      // context.stroke();
+    }
+  },
+  drawTopologyTest : function(){
+    var that = this;
+    var context = that.context;
+    var width = that.width;
+    var height = that.height;
+    var imageData = that.imageData;
+    var samples = that.voronoiArr[0].samples;
+    var polygons = that.voronoiArr[0].polygons;
+    var topology = spwUtils.computeTopology(that.voronoiArr[0].voronoi(samples));
+
+    // var samples = that.voronoiArr[0].samples;
+    // var curPolygons = that.voronoiArr[0].voronoi(samples).polygons();
+    function drawCell(cell) {
+      context.moveTo(cell[0][0], cell[0][1]);
+      for (var i = 1, n = cell.length; i < n; ++i) context.lineTo(cell[i][0], cell[i][1]);
+      // context.closePath();
+    }
+
+    function distance(a, b) {
+      var dx = a[0] - b[0], dy = a[1] - b[1];
+      return Math.sqrt(dx * dx + dy * dy);
+    };
+
+    var test = JSON.parse(JSON.stringify(polygons));
+    var random = Math.floor((Math.random() * 10) + 1);
+    var geo = topology.objects.voronoi.geometries;
+    var merge =topojson.merge(topology, geo.filter(function(d, i) { 
+      return i & 1; 
+    }));
+    for (var i = 0; i < 400; ++i) {
+      merge.coordinates[0].forEach(function(cell, j) {
+        console.log('cell : ' + cell);
+        // if( j & 1) return;
+        // cell = cell[[j]];
+        // if(typeof cell === 'undefined' || typeof cell[0] === 'undefined') return;
+        context.beginPath();
+        drawCell(cell);
+        var p0 = cell.shift(),
+            p1 = cell[0],
+            t = Math.max(0.5, 4 / distance(p0, p1)),
+            p2 = [p0[0] * (1 - t) + p1[0] * t, p0[1] * (1 - t) + p1[1] * t];
+
+        cell.push(p2);
+
+        // context.fillStyle = 'blue';
+        // context.fill();
+        // var rgba = spwUtils.squareSampleImage(imageData, p0[0], p0[1], 3, width);
+        // rgba.opacity = Math.random();
+        context.strokeStyle =  'blue';
         context.stroke();
 
         // var rgba1 = spwUtils.squareSampleImage(imageData, p1[0], p1[1], 3, width);
@@ -175,34 +238,77 @@ var springWaltz = springWaltz || {
         // grd.addColorStop(0,rgba1 + "");
         // grd.addColorStop(1,rgba2 + "");
         // context.fillStyle=grd;
-        
-        // var rgba = spwUtils.squareSampleImage(imageData, p0[0], p0[1], 3, width);
-        // if(i === 0){
-        //   context.fillStyle = "rgba(0,0,0,0.1)"
-        // }else if( i === 1){
-        //   rgba.opacity = 0.3;
-        //   context.fillStyle = rgba + "";
-        //   // context.fillStyle = "green"
-        // }else if( i === 2){
-        //   rgba.opacity = 0.2;
-        //   context.fillStyle = rgba + "";
-        //   // context.fillStyle = "red"
-        // }else if( i === 3){
-        //   rgba.opacity = 0.1;
-        //   context.fillStyle = rgba + "";
-        // }else if( i === 4){
-        //   rgba.opacity = 0.1;
-        //   context.fillStyle = rgba + "";
-        // };
         // context.fill();
-        context.closePath();
+        // context.closePath();
       });
-      // context.fillStyle = "#" + formatHex(i) + "0000";
-      // context.fill();
-      // context.strokeStyle = "#" + formatHex(i+100) + "0000";
-      // context.strokeStyle = "#fff";
-      // context.stroke();
-    }
+    };
+
+    // context.beginPath();
+    // var geo = topology.objects.voronoi.geometries;
+    // spwUtils.renderMultiPolygon(context, topojson.merge(topology, geo.filter(function(d, i) { 
+    //   return i & 1; 
+    // })), width, height);
+    // // context.fillStyle = "rgba(255,0,0,0.1)";
+    // context.fillStyle = "rgba(255,255,255,0.3)";
+    // context.fill();
+    // context.lineWidth = 1.5;
+    // context.lineJoin = "round";
+    // // context.strokeStyle = "rgba(255,0,0,1)";
+    // context.strokeStyle = "rgba(255,255,255,1)";
+    // context.stroke();
+    // context.closePath();
+  },
+  drawTopology : function(){
+    var that = this;
+    var context = that.context;
+    var width = that.width;
+    var height = that.height;
+    var imageData = that.imageData;
+    var samples = that.voronoiArr[0].samples;
+    var polygons = that.voronoiArr[0].polygons;
+    var topology = spwUtils.computeTopology(that.voronoiArr[0].voronoi(samples));
+
+    context.beginPath();
+    var geo = topology.objects.voronoi.geometries;
+    spwUtils.renderMultiPolygon(context, topojson.merge(topology, geo.filter(function(d, i) { 
+      return i & 1; 
+    })), width, height);
+    // context.fillStyle = "rgba(255,0,0,0.1)";
+    context.fillStyle = "rgba(255,255,255,0.3)";
+    context.fill();
+    context.lineWidth = 1.5;
+    context.lineJoin = "round";
+    // context.strokeStyle = "rgba(255,0,0,1)";
+    context.strokeStyle = "rgba(255,255,255,1)";
+    context.stroke();
+    context.closePath();
+
+
+
+    //Sites
+    // samples.forEach(function(p, i) {
+    //   context.beginPath();
+    //   context.arc(p[0], p[1], 10, 0, 2 * Math.PI);
+    //   // context.fillStyle = i & 1 ? "rgba(255,0,0,1)" : "rgba(0,0,0,0.6)";
+    //   var x = Math.floor(samples[i][0]);
+    //   var y = Math.floor(samples[i][1]);
+    //   // context.fillStyle = pointSampleImage(imageData, x, y) + "";
+    //   // console.log(squareSampleImage(imageData, x, y, 3));
+    //   var rgba = spwUtils.squareSampleImage(imageData, x, y, 3, width);
+    //   if(typeof samples[i][2] !== 'undefined'){
+    //     rgba.opacity = samples[i][2];
+    //   }else{
+    //     rgba.opacity = 0.8;
+    //   };
+    //   context.fillStyle =  rgba + "";
+    //   if(polygons[i].background !== 'undefined'){
+    //     context.fillStyle =  polygons[i].background;
+    //     delete polygons[i]['background'];
+    //   };
+    //   console.log('that.voronoiArr[0].diagram.find.found : ' + that.voronoiArr[0].diagram.find.found);
+    //   // context.fillStyle = i & 1 ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.6)";
+    //   context.fill();
+    // });
   },
   drawInnerCircle : function(){
     var that = this;
@@ -237,51 +343,15 @@ var springWaltz = springWaltz || {
     
     
 
-    var topology = spwUtils.computeTopology(that.voronoiArr[0].voronoi(samples));
-
-    context.beginPath();
-    var geo = topology.objects.voronoi.geometries;
-    spwUtils.renderMultiPolygon(context, topojson.merge(topology, geo.filter(function(d, i) { 
-      return i & 1; 
-    })), width, height);
-    // context.fillStyle = "rgba(255,0,0,0.1)";
-    context.fillStyle = "rgba(255,255,255,0.3)";
-    context.fill();
-    context.lineWidth = 1.5;
-    context.lineJoin = "round";
-    // context.strokeStyle = "rgba(255,0,0,1)";
-    context.strokeStyle = "rgba(255,255,255,1)";
-    context.stroke();
-    context.closePath();
 
 
-
+    
+    that.drawTopology();
+    // that.drawTopologyTest();
     that.drawInnerLine();
     // that.drawInnerCircle();
 
-    // samples.forEach(function(p, i) {
-    //   context.beginPath();
-    //   context.arc(p[0], p[1], 10, 0, 2 * Math.PI);
-    //   // context.fillStyle = i & 1 ? "rgba(255,0,0,1)" : "rgba(0,0,0,0.6)";
-    //   var x = Math.floor(samples[i][0]);
-    //   var y = Math.floor(samples[i][1]);
-    //   // context.fillStyle = pointSampleImage(imageData, x, y) + "";
-    //   // console.log(squareSampleImage(imageData, x, y, 3));
-    //   var rgba = spwUtils.squareSampleImage(imageData, x, y, 3, width);
-    //   if(typeof samples[i][2] !== 'undefined'){
-    //     rgba.opacity = samples[i][2];
-    //   }else{
-    //     rgba.opacity = 0.8;
-    //   };
-    //   context.fillStyle =  rgba + "";
-    //   if(polygons[i].background !== 'undefined'){
-    //     context.fillStyle =  polygons[i].background;
-    //     delete polygons[i]['background'];
-    //   };
-    //   console.log('that.voronoiArr[0].diagram.find.found : ' + that.voronoiArr[0].diagram.find.found);
-    //   // context.fillStyle = i & 1 ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.6)";
-    //   context.fill();
-    // });
+
 
     // var topology2 = spwUtils.computeTopology(that.voronoiArr[0].voronoi(samples2));
 
@@ -432,7 +502,43 @@ var springWaltz = springWaltz || {
     var polygons = that.voronoiArr[0].polygons;
     var imageData = that.imageData;
     var width = that.width;
+    var height = that.height;
     
+    // function distance(a, b) {
+    //   var dx = a[0] - b[0], dy = a[1] - b[1];
+    //   return Math.sqrt(dx * dx + dy * dy);
+    // };
+    // for (var i = 0; i < polygons.length; i++) {
+    //   var polygon = polygons[i];
+    //   var polyWidth = polygon.data[0];
+    //   var polyHeight = polygon.data[1];
+    //   for (var j = 0; j < (polygon.length - 1); j++) {
+    //     var p = polygon[j];
+    //     if(typeof p[2] === 'undefined'){
+    //       p[2] = 0;
+    //     };
+    //     if(typeof p[3] === 'undefined'){
+    //       p[3] = 0;
+    //     };
+
+    //     p[0] += p[2]; 
+    //     if (distance(p[0],polyWidth) > 10){
+    //       p[0] = p[2] *= -1; 
+    //     }else if (distance(p[0],polyWidth) < 3){
+    //       // p[0] = polyWidth + (p[2] *= -1);
+    //       p[0] = p[2]
+    //     }
+    //     p[1] += p[3]; 
+    //     if (distance(p[1],polyHeight) > 10){
+    //       p[1] = p[3] *= -1;
+    //     }else if (distance(p[1],polyHeight) < 3){
+    //       // p[1] = polyHeight + (p[3] *= -1);
+    //       p[1] = p[3];
+    //     };
+    //     p[2] += 10 * (Math.random() - 0.5) - 0.01 * p[2];
+    //     p[3] += 10 * (Math.random() - 0.5) - 0.01 * p[3];
+    //   };
+    // };
 
     for (var i = 0, n = polygons.length; i < n; ++i){
       context.beginPath();
