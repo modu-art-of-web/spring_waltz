@@ -147,9 +147,36 @@ var spwUtils = spwUtils || function() {
           });
         });
       },
+      getCenterAll : function(cenArr){
+        var sum = [0,0];
+        var center = [0,0];
+        cenArr.forEach(function(center, i) {
+          sum[0] += center[0];
+          sum[1] += center[1];
+        });
+        center[0] = sum[0] / cenArr.length;
+        center[1] = sum[1] / cenArr.length;
+        return center;
+      },
+      getCenterFromPolygon: function(polygon){
+        var that = this;
+        polygon.coordinates.forEach(function(polygon) {
+          polygon.forEach(function(ring) {
+            var cenArr = [];
+            ring.forEach(function(point, i) {
+              cenArr.push(point);
+              if(i === (ring.length - 1)){
+                ring.center = that.getCenterAll(cenArr);
+              };
+            });
+          });
+        });
+      },
       renderMultiPolygon : function (context, polygon, width, height, trans = 0) {
+        var that = this;
         var padX = trans;
         var padY = trans;
+        
         polygon.coordinates.forEach(function(polygon) {
           polygon.forEach(function(ring) {
             ring.forEach(function(point, i) {
@@ -160,9 +187,12 @@ var spwUtils = spwUtils || function() {
                 if(point[1] === 0 || point[1] === height){
                   padY = 0;
                 }
-              }
-              if (i) context.lineTo(point[0] + padX, point[1] + padY);
-              else context.moveTo(point[0] + padX, point[1] + padY);
+              };
+              if(i > 0){
+                context.lineTo(point[0] + padX, point[1] + padY);
+              }else{
+                context.moveTo(point[0] + padX, point[1] + padY);
+              };
             });
           });
         });

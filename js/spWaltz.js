@@ -41,26 +41,75 @@ var springWaltz = springWaltz || {
   angle : 0,
   audioVis : {},
   audioNode : {},
+  userAction : true,
+  mouseholding : false,
+  mouseTimeOut : 0,
+  mouseStrength :{
+    'mousemove' : 0.01,
+    'mouseup' : 0.3,
+    'mousehold' : 0.4,
+  },
+  now : 0,
+  then : Date.now(),
+  interval : 1000/30,   //frame late
+  delta : 0,
   initialize : function(){
     this.initCanvas();
-    
-    var maker = new voronoiMaker(50);
+    this.initImage();
+
+    var maker = new voronoiMaker(100);
     var voronoiObj = maker.init(this.width, this.height);
     this.voronoiArr.push(voronoiObj);
-    // console.log('arr : ' + JSON.stringify(voronoiObj));
-    // var maker2 = new voronoiMaker(30);
-    // var voronoiObj2 = maker2.init(this.width, this.height);
-    // this.voronoiArr.push(voronoiObj2);
-    this.imageLoad();
-    this.startAudio();
-    this.start();
-
+    // this.startAudio();
+    this.startAnimation();
   },
-  start : function(){
-    this.context.drawImage(this.backImgae, 0, 0);
-    this.imageData = this.context.getImageData(0, 0, this.width, this.height);
-    this.particleStart();
-    // this.drawVoro();
+  initImage : function(){
+    this.backImgae = new Image;
+    this.backImgae.src = this.backImgaeSrc;
+    // this.backImgae.onload = this.startAnimation;
+  },
+  initCanvas : function(){
+    this.width = window.innerWidth;
+    this.height = window.innerHeight;
+    this.canvas = d3.select("body").append("canvas")
+        .attr("width", this.width)
+        .attr("height", this.height);
+
+    d3.select("canvas").on("touchmove mousemove", this.mousemoved);
+    d3.select("canvas").on("touchstart mousedown", this.mousedown);
+    d3.select("canvas").on("touchend mouseup", this.mouseup);
+    this.context = this.canvas.node().getContext("2d");
+  },
+  mousedown : function() {
+    springWaltz.mouseTimeOut = setTimeout(springWaltz.mousehold, 500);
+  },
+  mousehold : function(){
+    springWaltz.mouseholding = true;
+  },
+  mouseup : function() {
+    if (springWaltz.mouseTimeOut){
+      clearTimeout(springWaltz.mouseTimeOut);
+    };
+    springWaltz.mouseholding = false;
+    var samp = springWaltz.diagramFind('mouseup', d3.mouse(this)[0],d3.mouse(this)[1], 50);
+    if(typeof samp !== 'undefined' && samp !== null){
+      springWaltz.voronoiArr[0].samples[samp.index].mouseup = true;
+      springWaltz.userAction = true;
+      // springWaltz.start();
+    };
+  },
+  mousemoved : function() {
+    var type = 'mousemove';
+    if(springWaltz.mouseholding){
+      type = 'mousehold';
+    };
+    var samp = springWaltz.diagramFind(type, d3.mouse(this)[0],d3.mouse(this)[1], 50);
+    if(typeof samp !== 'undefined' && samp !== null){
+      springWaltz.voronoiArr[0].polygons[samp.index].background = 'red';
+      springWaltz.voronoiArr[0].samples[samp.index].mousemoved = true;
+      springWaltz.userAction = true;
+      // springWaltz.start();
+    }
   },
   startAudio : function(){
     var that = this;
@@ -92,33 +141,19 @@ var springWaltz = springWaltz || {
         }
     }
   },
-  initCanvas : function(){
-    this.width = window.innerWidth;
-    this.height = window.innerHeight;
-    // this.initCanvas();
-    this.canvas = d3.select("body").append("canvas")
-        .attr("width", this.width)
-        .attr("height", this.height);
-
-    d3.select("canvas").on("touchmove mousemove", this.mousemoved);
-    this.context = this.canvas.node().getContext("2d");
-  },
-  mousemoved : function() {
-    // console.log('d3.mouse(this)[0] : ' + d3.mouse(this)[0]);
-    // console.log('d3.mouse(this)[1] : ' + d3.mouse(this)[1]);
-
-    var samp = springWaltz.diagramFind(d3.mouse(this)[0],d3.mouse(this)[1], 50);
-    if(typeof samp !== 'undefined' && samp !== null){
-      // console.log('samp.index : ' + samp.index);
-      springWaltz.voronoiArr[0].polygons[samp.index].background = 'red';
-      springWaltz.voronoiArr[0].samples[samp.index][2] = 0;
-      springWaltz.start();
-    }
-  },
-  imageLoad : function(){
-    this.backImgae = new Image;
-    this.backImgae.src = this.backImgaeSrc;
-    // this.backImgae.onload = this.start;
+  startAnimation : function(){
+    window.requestAnimationFrame(this.startAnimation.bind(this));
+    this.now = Date.now();
+    this.delta = this.now - this.then;
+    if (this.delta > this.interval) {
+      if(this.userAction){
+        this.then = this.now - (this.delta % this.interval);
+        this.context.drawImage(this.backImgae, 0, 0);
+        this.imageData = this.context.getImageData(0, 0, this.width, this.height);
+        this.startVoronoi();
+        this.userAction = false;
+      }
+    };
   },
   drawInnerLine : function(){
     var that = this;
@@ -126,107 +161,27 @@ var springWaltz = springWaltz || {
     var imageData = that.imageData;
     var context = that.context;
     var polygons = that.voronoiArr[0].polygons;
-    var formatHex = d3.format("02x");
-    // var samples = that.voronoiArr[0].samples;
-    // var curPolygons = that.voronoiArr[0].voronoi(samples).polygons();
-    function drawCell(cell) {
-      context.moveTo(cell[0][0], cell[0][1]);
-      for (var i = 1, n = cell.length; i < n; ++i) context.lineTo(cell[i][0], cell[i][1]);
-      // context.closePath();
-    }
+    var samples = that.voronoiArr[0].samples;
 
-    function distance(a, b) {
-      var dx = a[0] - b[0], dy = a[1] - b[1];
-      return Math.sqrt(dx * dx + dy * dy);
-    };
-
-    var test = JSON.parse(JSON.stringify(polygons));
-    var random = Math.floor((Math.random() * 10) + 1);
-    for (var i = 0; i < 5; ++i) {
-      test.forEach(function(cell, j) {
-        if( j & 1) return;
-        context.beginPath();
-        drawCell(cell);
+    // var polygonsClone = JSON.parse(JSON.stringify(polygons));
+    for (var i = 0; i < 1; ++i) {
+      polygons.forEach(function(cell, j) {
+        // if( j & 1) return;
         var p0 = cell.shift(),
             p1 = cell[0],
-            t = Math.max(0.5, 4 / distance(p0, p1)),
-            p2 = [p0[0] * (1 - t) + p1[0] * t, p0[1] * (1 - t) + p1[1] * t];
-
+            t = Math.min(0.001, 200 / that.getDistance(p0, p1));
+        if(typeof polygons[j].melting !== 'undefined'){
+          console.log('polygons[j].melting : ' + polygons[j].melting);
+          t = Math.max(0.1, polygons[j].melting);
+          delete polygons[j].melting;
+        }
+        var p2 = [p0[0] * (1 - t) + p1[0] * t, p0[1] * (1 - t) + p1[1] * t];
+        context.beginPath();
+        that.drawCell(cell);
         cell.push(p2);
-
         var rgba = spwUtils.squareSampleImage(imageData, p0[0], p0[1], 3, width);
         rgba.opacity = Math.random();
-        // context.strokeStyle =  rgba + "";
-        // context.stroke();
-
-        var rgba1 = spwUtils.squareSampleImage(imageData, p1[0], p1[1], 3, width);
-        var rgba2 = spwUtils.squareSampleImage(imageData, p2[0], p2[1], 3, width);
-        var randomOpa = Math.random()-0.7;
-        rgba1.opacity = randomOpa;
-        rgba2.opacity = randomOpa;
-        var grd=context.createLinearGradient(p1[0],p1[1],p2[0],p2[1]);
-        grd.addColorStop(0,rgba1 + "");
-        grd.addColorStop(1,rgba2 + "");
-        context.fillStyle=grd;
-        context.fill();
-        context.closePath();
-      });
-      // context.fillStyle = "#" + formatHex(i) + "0000";
-      // context.fill();
-      // context.strokeStyle = "#" + formatHex(i+100) + "0000";
-      // context.strokeStyle = "#fff";
-      // context.stroke();
-    }
-  },
-  drawTopologyTest : function(){
-    var that = this;
-    var context = that.context;
-    var width = that.width;
-    var height = that.height;
-    var imageData = that.imageData;
-    var samples = that.voronoiArr[0].samples;
-    var polygons = that.voronoiArr[0].polygons;
-    var topology = spwUtils.computeTopology(that.voronoiArr[0].voronoi(samples));
-
-    // var samples = that.voronoiArr[0].samples;
-    // var curPolygons = that.voronoiArr[0].voronoi(samples).polygons();
-    function drawCell(cell) {
-      context.moveTo(cell[0][0], cell[0][1]);
-      for (var i = 1, n = cell.length; i < n; ++i) context.lineTo(cell[i][0], cell[i][1]);
-      // context.closePath();
-    }
-
-    function distance(a, b) {
-      var dx = a[0] - b[0], dy = a[1] - b[1];
-      return Math.sqrt(dx * dx + dy * dy);
-    };
-
-    var test = JSON.parse(JSON.stringify(polygons));
-    var random = Math.floor((Math.random() * 10) + 1);
-    var geo = topology.objects.voronoi.geometries;
-    var merge =topojson.merge(topology, geo.filter(function(d, i) { 
-      return i & 1; 
-    }));
-    for (var i = 0; i < 400; ++i) {
-      merge.coordinates[0].forEach(function(cell, j) {
-        console.log('cell : ' + cell);
-        // if( j & 1) return;
-        // cell = cell[[j]];
-        // if(typeof cell === 'undefined' || typeof cell[0] === 'undefined') return;
-        context.beginPath();
-        drawCell(cell);
-        var p0 = cell.shift(),
-            p1 = cell[0],
-            t = Math.max(0.5, 4 / distance(p0, p1)),
-            p2 = [p0[0] * (1 - t) + p1[0] * t, p0[1] * (1 - t) + p1[1] * t];
-
-        cell.push(p2);
-
-        // context.fillStyle = 'blue';
-        // context.fill();
-        // var rgba = spwUtils.squareSampleImage(imageData, p0[0], p0[1], 3, width);
-        // rgba.opacity = Math.random();
-        context.strokeStyle =  'blue';
+        context.strokeStyle =  rgba + "";
         context.stroke();
 
         // var rgba1 = spwUtils.squareSampleImage(imageData, p1[0], p1[1], 3, width);
@@ -241,22 +196,7 @@ var springWaltz = springWaltz || {
         // context.fill();
         // context.closePath();
       });
-    };
-
-    // context.beginPath();
-    // var geo = topology.objects.voronoi.geometries;
-    // spwUtils.renderMultiPolygon(context, topojson.merge(topology, geo.filter(function(d, i) { 
-    //   return i & 1; 
-    // })), width, height);
-    // // context.fillStyle = "rgba(255,0,0,0.1)";
-    // context.fillStyle = "rgba(255,255,255,0.3)";
-    // context.fill();
-    // context.lineWidth = 1.5;
-    // context.lineJoin = "round";
-    // // context.strokeStyle = "rgba(255,0,0,1)";
-    // context.strokeStyle = "rgba(255,255,255,1)";
-    // context.stroke();
-    // context.closePath();
+    }
   },
   drawTopology : function(){
     var that = this;
@@ -283,7 +223,13 @@ var springWaltz = springWaltz || {
     context.stroke();
     context.closePath();
 
-
+    //stoke of polygons
+    // context.beginPath();
+    // spwUtils.renderMultiLineString(context, topojson.mesh(topology, topology.objects.voronoi, function(a, b) { return a !== b; }));
+    // // context.strokeStyle = "rgba(0,0,0,0.4)";
+    // context.strokeStyle = "rgba(255,255,255,0.8)";
+    // context.lineWidth = 0.5;
+    // context.stroke();
 
     //Sites
     // samples.forEach(function(p, i) {
@@ -321,141 +267,87 @@ var springWaltz = springWaltz || {
     context.fill();
     context.stroke();
   },
-  particleStart : function(){
+  drawBasic : function(){
+    var x, y = 0;
     var that = this;
+    var context = that.context;
     var samples = that.voronoiArr[0].samples;
-    // var samples2 = that.voronoiArr[1].samples;
-    var width = that.width;
-    var height = that.height;
+    var polygons = that.voronoiArr[0].polygons;
     var imageData = that.imageData;
     var width = that.width;
-    var polygons = that.voronoiArr[0].polygons;
-    var context = that.context;
+    var height = that.height;
 
-    // for (var i = 0; i < samples.length; ++i) {
-    //   var p = samples[i];
-    //   p[0] += p[3]; if (p[0] < 0) p[0] = p[3] *= -1; else if (p[0] > width) p[0] = width + (p[3] *= -1);
-    //   p[1] += p[4]; if (p[1] < 0) p[1] = p[4] *= -1; else if (p[1] > height) p[1] = height + (p[4] *= -1);
-    //   p[3] += 10 * (Math.random() - 0.5) - 0.01 * p[3];
-    //   p[4] += 10 * (Math.random() - 0.5) - 0.01 * p[4];
-    // }
+    for (var i = 0, n = polygons.length; i < n; ++i){
+      context.beginPath();
 
-    
-    
+      x = Math.floor(samples[i][0]),
+      y = Math.floor(samples[i][1]);
+
+      // context.fillStyle = pointSampleImage(imageData, x, y) + "";
+      // console.log(squareSampleImage(imageData, x, y, 3));
+
+      var rgba = spwUtils.squareSampleImage(imageData, x, y, 3, width);
+      if(typeof samples[i].mouseup !== 'undefined'){
+        // rgba.opacity = samples[i][2];
+        rgba.opacity = 0.5;
+      }else{
+        rgba.opacity = 0.8;
+      };
+
+      context.fillStyle =  rgba + "";
+      if(typeof polygons[i].background !== 'undefined'){
+        context.fillStyle =  polygons[i].background;
+        delete polygons[i].background;
+      }
+      that.drawCell(polygons[i]);
+      context.strokeStyle =  "#fff";
+      context.stroke();
+      context.fill();
+      context.closePath();
+    };
 
 
-
-    
-    that.drawTopology();
-    // that.drawTopologyTest();
-    that.drawInnerLine();
-    // that.drawInnerCircle();
-
-
-
-    // var topology2 = spwUtils.computeTopology(that.voronoiArr[0].voronoi(samples2));
-
+    // // 링크
     // context.beginPath();
-    // spwUtils.renderMultiLineString(context, topojson.mesh(topology, topology.objects.voronoi, function(a, b) { return a !== b; }));
-    // // context.strokeStyle = "rgba(0,0,0,0.4)";
-    // context.strokeStyle = "rgba(255,255,255,0.8)";
-    // context.lineWidth = 0.5;
+    // for (var i = 0, n = links.length; i < n; ++i) drawLink(links[i]);
+    // context.strokeStyle = "#fff";
     // context.stroke();
-
-
-    
-
-    // topology.arcs.forEach(function(p, i) {
-      // context.beginPath();
-      // context.arc(p.left[0], p.left[1], 10, 0, 2 * Math.PI);
-      // context.fill();
-      // context.closePath();
-    // });
-
     // context.beginPath();
-    // spwUtils.renderMultiPolygon(context, topojson.merge(topology, topology.objects.voronoi.geometries.filter(function(d, i) { 
-    //   return i & 1; 
-    // })), width, height, ((Math.random() * 11) - 5));
-    // // context.fillStyle = "rgba(255,0,0,0.1)";
-    // context.fillStyle = "rgba(255,255,255,0.3)";
+
+    // //사이트
+    // for (var i = 1, n = samples.length; i < n; ++i) drawSite(samples[i]);
+    // context.fillStyle = "black";
     // context.fill();
-    // context.lineWidth = 1.5;
-    // context.lineJoin = "round";
-    // // context.strokeStyle = "rgba(255,0,0,1)";
-    // context.strokeStyle = "rgba(255,255,255,1)";
+    // context.strokeStyle = "yellow";
     // context.stroke();
-    // context.closePath();
-
-    // spwUtils.renderMultiPolygon(context, topojson.merge(topology, topology.objects.voronoi.geometries.filter(function(d, i) { 
-    //   return i & 1; 
-    // })), width, height, ((Math.random() * 11) - 5));
-    // // context.fillStyle = "rgba(255,0,0,0.1)";
-    // context.fillStyle = "rgba(255,255,255,0.3)";
-    // context.fill();
-    // context.lineWidth = 1.5;
-    // context.lineJoin = "round";
-    // // context.strokeStyle = "rgba(255,0,0,1)";
-    // context.strokeStyle = "rgba(255,255,255,1)";
-    // context.stroke();
-    // context.closePath();
-
-
-
-    // context.beginPath();
-    // spwUtils.renderMultiPolygon(context, topojson.merge(topology2, topology2.objects.voronoi.geometries.filter(function(d, i) { 
-    //   return i & 1; 
-    // })));
-    // // context.fillStyle = "rgba(255,0,0,0.1)";
-    // context.fillStyle = "rgba(255,255,255,0.3)";
-    // context.fill();
-    // context.lineWidth = 1.5;
-    // context.lineJoin = "round";
-    // // context.strokeStyle = "rgba(255,0,0,1)";
-    // context.strokeStyle = "rgba(255,255,255,1)";
-    // context.stroke();
-    // context.closePath();
-
-
-    // context.beginPath();
-    // spwUtils.renderMultiPolygon(context, topojson.merge(topology2, topology2.objects.voronoi.geometries.filter(function(d, i) { 
-    //   return !(i & 1); 
-    // })));
-    // // context.fillStyle = "rgba(255,0,0,0.1)";
-    // context.fillStyle = "rgba(255,255,255,0.8)";
-    // context.fill();
-    // context.lineWidth = 1.5;
-    // context.lineJoin = "round";
-    // // context.strokeStyle = "rgba(255,0,0,1)";
-    // context.strokeStyle = "rgba(255,255,255,1)";
-    // context.stroke();
-    // context.closePath();
-
-    // requestAnimationFrame(that.particleStart);
   },
-  diagramFind : function(x, y, radius){
-    console.log('find');
+  startVoronoi : function(){
+    console.log('startVoronoi');
+    this.drawInnerCircle();
+    this.drawInnerLine();
+    this.drawTopology();
+    this.drawBasic();
+  },
+  diagramFind : function(type, x, y, radius){
     var that = this;
     var diagram = that.voronoiArr[0].diagram;
     var polygons = that.voronoiArr[0].polygons;
-    // var polygons = that.voronoiArr[0].diagram.polygons();
+    var samples = that.voronoiArr[0].samples;
     var i, next = diagram.find.found || Math.floor(Math.random() * diagram.cells.length);
     var cell = diagram.cells[next] || diagram.cells[next=0];
     var dx = x - cell.site[0], 
         dy = y - cell.site[1],
         dist = dx*dx + dy*dy;
-
-    console.log('diagram.find.found : ' + diagram.find.found);
-    
-    // polygons.forEach(function(p,i){
-    //   delete polygons[i]['background'];
-    // });
     do {
       cell = diagram.cells[i=next];
       next = null;
 
-      // delete polygons[i]['background'] ;
-      // polygon._groups[0][i].setAttribute('fill', '#f5a61d');
       polygons[i].background = 'orange';
+      if(typeof polygons[i].melting === 'undefined'){
+        polygons[i].melting = 0;
+      };
+      polygons[i].melting = that.mouseStrength[type];
+
       cell.halfedges.forEach(function(e) {
         var edge = diagram.edges[e];
         var ea = edge.left;
@@ -463,18 +355,13 @@ var springWaltz = springWaltz || {
           ea = edge.right;
         }
         if (ea){
-          // console.log('ea.index : ' + ea.index);
           if( polygons[ea.index].background != 'orange'){
-            for(var j =0; j <polygons[ea.index].length; j++){
-              // polygons[ea.index][j] = resample(polygons[ea.index][j]);
-              // polygons[ea.index][j][0] += Math.random() < 0.5 ? -1 : 1;
-              // polygons[ea.index][j][1] += Math.random() < 0.5 ? -1 : 1;
-            }
             polygons[ea.index].background = 'green';
-            // console.log('green ea.index : ' + ea.index);
+            if(typeof polygons[ea.index].melting === 'undefined'){
+              polygons[ea.index].melting = 0;
+            };
+            polygons[ea.index].melting = that.mouseStrength[type] * 0.5;
           };
-          // if (polygon._groups[0][ea.index].getAttribute('fill') != '#f5a61d')
-          // polygon._groups[0][ea.index].setAttribute('fill', '#fbe8ab');
           var dx = x - ea[0],
               dy = y - ea[1],
               ndist = dx*dx + dy*dy;
@@ -494,97 +381,6 @@ var springWaltz = springWaltz || {
     
     if (!radius || dist < radius * radius) return cell.site;
   },
-  drawVoro : function(){
-    var x, y = 0;
-    var that = this;
-    var context = that.context;
-    var samples = that.voronoiArr[0].samples;
-    var polygons = that.voronoiArr[0].polygons;
-    var imageData = that.imageData;
-    var width = that.width;
-    var height = that.height;
-    
-    // function distance(a, b) {
-    //   var dx = a[0] - b[0], dy = a[1] - b[1];
-    //   return Math.sqrt(dx * dx + dy * dy);
-    // };
-    // for (var i = 0; i < polygons.length; i++) {
-    //   var polygon = polygons[i];
-    //   var polyWidth = polygon.data[0];
-    //   var polyHeight = polygon.data[1];
-    //   for (var j = 0; j < (polygon.length - 1); j++) {
-    //     var p = polygon[j];
-    //     if(typeof p[2] === 'undefined'){
-    //       p[2] = 0;
-    //     };
-    //     if(typeof p[3] === 'undefined'){
-    //       p[3] = 0;
-    //     };
-
-    //     p[0] += p[2]; 
-    //     if (distance(p[0],polyWidth) > 10){
-    //       p[0] = p[2] *= -1; 
-    //     }else if (distance(p[0],polyWidth) < 3){
-    //       // p[0] = polyWidth + (p[2] *= -1);
-    //       p[0] = p[2]
-    //     }
-    //     p[1] += p[3]; 
-    //     if (distance(p[1],polyHeight) > 10){
-    //       p[1] = p[3] *= -1;
-    //     }else if (distance(p[1],polyHeight) < 3){
-    //       // p[1] = polyHeight + (p[3] *= -1);
-    //       p[1] = p[3];
-    //     };
-    //     p[2] += 10 * (Math.random() - 0.5) - 0.01 * p[2];
-    //     p[3] += 10 * (Math.random() - 0.5) - 0.01 * p[3];
-    //   };
-    // };
-
-    for (var i = 0, n = polygons.length; i < n; ++i){
-      context.beginPath();
-
-      x = Math.floor(samples[i][0]),
-      y = Math.floor(samples[i][1]);
-
-      // context.fillStyle = pointSampleImage(imageData, x, y) + "";
-      // console.log(squareSampleImage(imageData, x, y, 3));
-
-      var rgba = spwUtils.squareSampleImage(imageData, x, y, 3, width);
-      if(typeof samples[i][2] !== 'undefined'){
-        rgba.opacity = samples[i][2];
-      }else{
-        rgba.opacity = 0.8;
-      };
-
-      context.fillStyle =  rgba + "";
-      // if(typeof polygons[i].background !== 'undefined'){
-      //   console.log('background yes : ' + i + ' : ' + polygons[i].background);
-      //   context.fillStyle =  polygons[i].background;
-      // }
-      that.drawCell(polygons[i]);
-      context.strokeStyle =  "#fff";
-      context.stroke();
-      context.fill();
-      context.closePath();
-    };
-
-    // that.drawInnerCircle();
-    // that.drawInnerLine();
-    
-    // // 링크
-    // context.beginPath();
-    // for (var i = 0, n = links.length; i < n; ++i) drawLink(links[i]);
-    // context.strokeStyle = "#fff";
-    // context.stroke();
-    // context.beginPath();
-
-    // //사이트
-    // for (var i = 1, n = samples.length; i < n; ++i) drawSite(samples[i]);
-    // context.fillStyle = "black";
-    // context.fill();
-    // context.strokeStyle = "yellow";
-    // context.stroke();
-  },
   drawPolygonIncircle : function(points, offsetRadius) {
     var context = this.context;
     var circle = spwUtils.polygonIncircle(points),
@@ -593,6 +389,10 @@ var springWaltz = springWaltz || {
       context.moveTo(circle[0] + radius, circle[1]);
       context.arc(circle[0], circle[1], radius, 0, 2 * Math.PI);
     }
+  },
+  getDistance:function(a, b) {
+    var dx = a[0] - b[0], dy = a[1] - b[1];
+    return Math.sqrt(dx * dx + dy * dy);
   },
   drawSite:function(site) {
     var context = this.context;
