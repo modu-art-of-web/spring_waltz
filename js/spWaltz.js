@@ -4,10 +4,23 @@ function voronoiMaker(sampleRadius){
 
   function sampleing(width, height){
     sample = spwUtils.poissonDiscSampler(width, height, sampleRadius);
-    // samp = [[0,5],[5,3],[300,200]];
-    // console.log(sample());
     while (s =sample()) samples.push(s);
-    // console.log(samples);
+
+    // samples = d3.range(300).map(function(d) { return [Math.floor(Math.random() * (width + 1)), Math.floor(Math.random() * (height + 1))]; });
+
+    var widthSideDotNum = 100;
+    var heightSideDotNum = 50;
+    var dotsW = width / widthSideDotNum;
+    var dotsH = height / heightSideDotNum;
+    for(var i = 0; i <= widthSideDotNum; i++){
+      samples.push([dotsW*i, 0]);
+      samples.push([dotsW*i, height]);
+    };
+    for(var i = 1; i < heightSideDotNum; i++){
+      samples.push([0, dotsH*i]);
+      samples.push([width, dotsH*i]);
+    };
+    // Math.floor(Math.random() * (width - min + 1)) + min
   };
   function dsq(a,b) {
       var dx = a[0]-b[0], dy = a[1]-b[1];
@@ -19,7 +32,7 @@ function voronoiMaker(sampleRadius){
   function initVoronoi(width, height){
     var alpha = 50;
     var asq = alpha*alpha;
-    voronoi = d3.voronoi().extent([[-1, -1], [width + 1, height + 1]]);
+    voronoi = d3.voronoi().extent([[0, 0], [width, height]]);
     var evalArr = [];
     vertices = [[162, 332], [182, 299], [141, 292], [158, 264], [141, 408], [160, 400], [177, 430], [151, 442], [155, 425], [134, 430], [126, 447], [139, 466], [160, 471], [167, 447], [182, 466], [192, 442], [187, 413], [173, 403], [168, 425], [153, 413], [179, 275], [163, 292], [134, 270], [143, 315], [177, 320], [163, 311], [162, 281], [182, 255], [141, 226], [156, 235], [173, 207], [187, 230], [204, 194], [165, 189], [145, 201], [158, 167], [190, 165], [206, 145], [179, 153], [204, 114], [221, 138], [243, 112], [248, 139], [177, 122], [179, 99], [196, 82], [219, 90], [240, 75], [218, 61], [228, 53], [211, 34], [197, 51], [179, 65], [155, 70], [165, 85], [134, 80], [124, 58], [153, 44], [173, 34], [192, 27], [156, 19], [119, 32], [128, 17], [138, 36], [100, 58], [112, 73], [100, 92], [78, 100], [83, 78], [61, 63], [80, 44], [100, 26], [60, 39], [43, 71], [34, 54], [32, 90], [53, 104], [60, 82], [66, 99], [247, 94], [187, 180], [221, 168]];
     vertices = [];
@@ -86,8 +99,8 @@ var springWaltz = springWaltz || {
   mouseTimeOut : 0,
   mouseStrength :{
     'mousemove' : 0.01,
-    'mouseup' : 0.3,
-    'mousehold' : 0.4,
+    'mouseup' : 0.05,
+    'mousehold' : 0.1,
   },
   meltRandArr : [],
   now : 0,
@@ -101,6 +114,8 @@ var springWaltz = springWaltz || {
   meltTriArrs : [],
   mouseX : 0,
   mouseY : 0,
+  rythmX : 0,
+  rythmY : 0,
   initialize : function(){
     this.initCanvas();
     this.initImage();
@@ -231,15 +246,28 @@ var springWaltz = springWaltz || {
   },
   startEqulizer : function(){
     var that = this;
-    var context = this.context;
-    var vertices = this.voronoiArr[0].vertices;
-    var height = this.height;
-    var width = this.width;
-    var bars1 = this.barsArr1;
-    var bars2 = this.barsArr2;
-    var bars3 = this.barsArr3;
-    var bars4 = this.barsArr4;
+    var context = that.context;
+    var samples = that.voronoiArr[0].samples;
+    var vertices = that.voronoiArr[0].vertices;
+    var height = that.height;
+    var width = that.width;
+    var bars1 = that.barsArr1;
+    var bars2 = that.barsArr2;
+    var bars3 = that.barsArr3;
+    var bars4 = that.barsArr4;
     var barW = width / (bars1.length+1);
+
+    var perAngle = 360 / bars3.length;
+
+    // that.rythmX += 5;
+    // that.rythmY = Math.cos(that.rythmX) * 30;
+    // samples.push([
+    //   that.rythmX
+    //   ,that.rythmY
+    // ]);
+    // samples[samples.length - 1].melting = 0.3;
+    // samples[samples.length - 1].musics = true;
+
     // console.log('bars1.length : '  + bars1.length);
     // console.log('height : ' + height);
     // bars1.forEach(function(b, i){
@@ -275,9 +303,16 @@ var springWaltz = springWaltz || {
     //   // context.closePath();
     // })
 
-    var perAngle = 360 / bars3.length;
+    
+    bars3.forEach(function(b, i){
 
-    // bars3.forEach(function(b, i){
+      // samples.push([
+      //   barW*(i+1)
+      //   ,height/2 + (b*3000)
+      // ]);
+      // samples[samples.length - 1].melting = Math.random() + 0.5;
+      // samples[samples.length - 1].musics = true;
+
       // console.log(b);
       // console.log(height-b*10);
       // context.beginPath();
@@ -293,7 +328,8 @@ var springWaltz = springWaltz || {
       // context.stroke();
       // context.fill();
       // context.closePath();
-    // })
+    })
+
     that.meltTriArrs = [];
     bars4.forEach(function(b, i){
     //   // console.log(b);
@@ -307,7 +343,13 @@ var springWaltz = springWaltz || {
     //   // context.stroke();
     //   // context.fill();
     //   // context.closePath();
-        
+
+        samples.push([
+          that.mouseX + Math.sin(perAngle*i) * (b*2)
+          ,that.mouseY + Math.cos(perAngle*i) * (b*2)
+        ]);
+        samples[samples.length - 1].melting = 0.9;
+        samples[samples.length - 1].musics = true;
         that.meltTriArrs.push([
           that.mouseX + Math.sin(perAngle*i) * (b*5)
           ,that.mouseY + Math.cos(perAngle*i) * (b*5)
@@ -585,40 +627,40 @@ var springWaltz = springWaltz || {
     var width = that.width;
     var height = that.height;
 
-    for (var i = 0, n = polygons.length; i < n; ++i){
-      context.beginPath();
+    // for (var i = 0, n = polygons.length; i < n; ++i){
+    //   context.beginPath();
 
-      x = Math.floor(polygons[i].data[0]),
-      y = Math.floor(polygons[i].data[1]);
+    //   x = Math.floor(polygons[i].data[0]),
+    //   y = Math.floor(polygons[i].data[1]);
 
-      // context.fillStyle = pointSampleImage(imageData, x, y) + "";
-      // console.log(squareSampleImage(imageData, x, y, 3));
+    //   // context.fillStyle = pointSampleImage(imageData, x, y) + "";
+    //   // console.log(squareSampleImage(imageData, x, y, 3));
 
-      var rgba = spwUtils.squareSampleImage(imageData, x, y, 3, width);
-      // if(typeof samples[i].mouseup !== 'undefined'){
-      //   // rgba.opacity = samples[i][2];
-      //   rgba.opacity = 0.5;
-      // }else{
-      //   rgba.opacity = 0.8;
-      // };
+    //   var rgba = spwUtils.squareSampleImage(imageData, x, y, 3, width);
+    //   // if(typeof samples[i].mouseup !== 'undefined'){
+    //   //   // rgba.opacity = samples[i][2];
+    //   //   rgba.opacity = 0.5;
+    //   // }else{
+    //   //   rgba.opacity = 0.8;
+    //   // };
 
-      context.fillStyle =  rgba + "";
+    //   context.fillStyle =  rgba + "";
 
-      if(typeof polygons[i] !== 'undefined' && typeof polygons[i].background !== 'undefined'){
-        context.fillStyle =  polygons[i].background;
-        // that.meltTriArrs = [];
-        polygons[i].forEach(function(pp,ii){
-          that.meltTriArrs.push([(pp[0]),(pp[1])]);
-        });
+    //   if(typeof polygons[i] !== 'undefined' && typeof polygons[i].background !== 'undefined'){
+    //     context.fillStyle =  polygons[i].background;
+    //     // that.meltTriArrs = [];
+    //     polygons[i].forEach(function(pp,ii){
+    //       that.meltTriArrs.push([(pp[0]),(pp[1])]);
+    //     });
         
-        delete polygons[i].background;
-      }
-      that.drawCell(polygons[i]);
-      context.strokeStyle =  "#fff";
-      context.stroke();
-      context.fill();
-      context.closePath();
-    };
+    //     delete polygons[i].background;
+    //   }
+    //   that.drawCell(polygons[i]);
+    //   context.strokeStyle =  "#fff";
+    //   context.stroke();
+    //   context.fill();
+    //   context.closePath();
+    // };
 
     var alpha = 200;
     var asq = alpha*alpha;
@@ -630,23 +672,83 @@ var springWaltz = springWaltz || {
           return a.map(function(d) { return [d[0]+dx,d[1]+dy]; });
     };
     console.log('that.meltTriArrs.length : ' + that.meltTriArrs.length);
-    var triangles = voronoi(that.meltTriArrs).triangles().filter(function(t, i) {
+    var triangles = voronoi(samples.filter(function(s, i) {
+      if(typeof s.musics !== 'undefined'){
+        samples.splice(i,1);
+      };
+      return typeof s.melting !== 'undefined';
+    })).triangles().filter(function(t, i) {
         // console.log(t);
         // console.log(i);
+        // if(typeof t[0].melting !== 'undefined' && typeof polygons[i].background !== 'undefined'){
+
+        // }
         var evaluated = dsq(t[0],t[1]) < asq && dsq(t[0],t[2]) < asq && dsq(t[1],t[2]) < asq;
         return evaluated;
     });
     
     // triangles
     for (var i = 0, n = triangles.length; i < n; ++i){
+
+      
       context.beginPath();
       that.drawCell(triangles[i]);
-      context.fillStyle =  "rgba(255,255,255,0.5)";
+
+      // var maxMeltPoint = d3.max(triangles[i], function(t) { return t.melting; });
+      // var minMeltPoint = d3.min(triangles[i], function(t) { return t.melting; });
+      // console.log('maxMeltPoint : ' + maxMeltPoint);
+      // console.log('minMeltPoint : ' + minMeltPoint);
+      // var rgba1 = spwUtils.squareSampleImage(imageData, triangles[i][0][0], triangles[i][0][1], 3, width);
+      // var rgba2 = spwUtils.squareSampleImage(imageData, triangles[i][1][0], triangles[i][1][1], 3, width);
+      // var rgba2 = 'rgba(255,255,255,1)';
+      // var randomOpa = Math.random()-0.7;
+      // // rgba1.opacity = 1;
+      // // rgba2.opacity = 1;
+      // var grd=context.createLinearGradient(triangles[i][0][0],triangles[i][0][1],triangles[i][1][0],triangles[i][1][1]);
+      // var grd=context.createLinearGradient(0,0,width,height);
+
+      // grd.addColorStop(0,rgba1 + "");
+      // grd.addColorStop(0.7,rgba2 + "");
+      // // grd.addColorStop(0.6,rgba3 + "");
+      // // grd.addColorStop(0.98,rgba4 + "");
+      // // grd.addColorStop(1,rgba5 + "");
+      // context.fillStyle=grd;
+
+      var meltingAver = (triangles[i][0].melting + triangles[i][1].melting + triangles[i][2].melting) / 3;
+      context.fillStyle =  "rgba(255,255,255,"+(1-meltingAver)+")";
       // if(typeof polygons[i] !== 'undefined' && typeof polygons[i].background !== 'undefined'){
       //   context.fillStyle =  polygons[i].background;
       //   delete polygons[i].background;
       // }
-      context.strokeStyle =  "rgba(0,0,0,0.5)";
+      context.strokeStyle =  "rgba(0,0,0,0."+(1-meltingAver)+")";
+      // context.stroke();
+      context.fill();
+      context.closePath();
+    };
+
+
+
+
+
+    var triangles2 = voronoi(samples.filter(function(s, i) {
+      // return typeof s.melting === 'undefined';
+      return true;
+    })).triangles().filter(function(t, i) {
+        return true;
+        // var evaluated = dsq(t[0],t[1]) < asq && dsq(t[0],t[2]) < asq && dsq(t[1],t[2]) < asq;
+        // return evaluated;
+    });
+
+    for (var i = 0, n = triangles2.length; i < n; ++i){
+      context.beginPath();
+      that.drawCell(triangles2[i]);
+      var opacity = 1;
+      if(typeof triangles2[i][0].melting !== 'undefined' && typeof triangles2[i][1].melting !== 'undefined' && typeof triangles2[i][2].melting !== 'undefined'){
+        var meltingAver = (triangles2[i][0].melting + triangles2[i][1].melting + triangles2[i][2].melting) / 3;
+        opacity = 1 - meltingAver;
+      };
+      context.fillStyle =  "rgba(255,255,255,"+opacity+")";
+      context.strokeStyle =  "rgba(255,255,255,"+opacity+")";
       context.stroke();
       context.fill();
       context.closePath();
@@ -660,11 +762,13 @@ var springWaltz = springWaltz || {
 
     //사이트
     // context.beginPath();
-    // for (var i = 0, n = vertices.length; i < n; ++i){
-    //   // context.font = "20px Arial";
-    //   // context.fillStyle = "#fff";
-    //   // context.fillText(i,vertices[i][0],vertices[i][1]);
-    //   that.drawSite(vertices[i])
+    // for (var i = 0, n = samples.length; i < n; ++i){
+    //   if(typeof samples[i].melting !== 'undefined'){
+    //     context.font = "20px Arial";
+    //     context.fillStyle = "#fff";
+    //     context.fillText(samples[i].melting,samples[i][0],samples[i][1]);
+    //     that.drawSite(samples[i])
+    //   }
     // };
     // context.fillStyle = "black";
     // context.fill();

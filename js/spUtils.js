@@ -2,6 +2,8 @@ var spwUtils = spwUtils || function() {
   return{
       // Based on https://www.jasondavies.com/poisson-disc/
       poissonDiscSampler : function(width, height, radius) {
+        // width = width+ 500;
+        // height = height+ 500;
         var k = 30, // maximum number of samples before rejection
             radius2 = radius * radius,
             R = 3 * radius2,
