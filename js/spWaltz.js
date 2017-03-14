@@ -4,20 +4,60 @@ function voronoiMaker(sampleRadius){
 
   function sampleing(width, height){
     sample = spwUtils.poissonDiscSampler(width, height, sampleRadius);
-    while (s = sample()) samples.push(s);
+    // samp = [[0,5],[5,3],[300,200]];
+    // console.log(sample());
+    while (s =sample()) samples.push(s);
+    // console.log(samples);
+  };
+  function dsq(a,b) {
+      var dx = a[0]-b[0], dy = a[1]-b[1];
+      return dx*dx+dy*dy;
+  };
+  function offset(a,dx,dy) {
+        return a.map(function(d) { return [d[0]+dx,d[1]+dy]; });
   };
   function initVoronoi(width, height){
+    var alpha = 50;
+    var asq = alpha*alpha;
     voronoi = d3.voronoi().extent([[-1, -1], [width + 1, height + 1]]);
+    var evalArr = [];
+    vertices = [[162, 332], [182, 299], [141, 292], [158, 264], [141, 408], [160, 400], [177, 430], [151, 442], [155, 425], [134, 430], [126, 447], [139, 466], [160, 471], [167, 447], [182, 466], [192, 442], [187, 413], [173, 403], [168, 425], [153, 413], [179, 275], [163, 292], [134, 270], [143, 315], [177, 320], [163, 311], [162, 281], [182, 255], [141, 226], [156, 235], [173, 207], [187, 230], [204, 194], [165, 189], [145, 201], [158, 167], [190, 165], [206, 145], [179, 153], [204, 114], [221, 138], [243, 112], [248, 139], [177, 122], [179, 99], [196, 82], [219, 90], [240, 75], [218, 61], [228, 53], [211, 34], [197, 51], [179, 65], [155, 70], [165, 85], [134, 80], [124, 58], [153, 44], [173, 34], [192, 27], [156, 19], [119, 32], [128, 17], [138, 36], [100, 58], [112, 73], [100, 92], [78, 100], [83, 78], [61, 63], [80, 44], [100, 26], [60, 39], [43, 71], [34, 54], [32, 90], [53, 104], [60, 82], [66, 99], [247, 94], [187, 180], [221, 168]];
+    vertices = [];
+    // polygons = voronoi(offset(samples,200,200)).polygons().filter(function(t, i) {
+    //     // console.log(t);
+    //     // console.log(i);
+    //     var evaluated = dsq(t[0],t[1]) < asq && dsq(t[0],t[2]) < asq && dsq(t[1],t[2]) < asq;
+    //     if(!evaluated){
+    //       evalArr.push(i);
+    //     }
+    //     return evaluated;
+    // });
+    // triangles = voronoi(offset(vertices,0,0)).triangles().filter(function(t, i) {
+    //     // console.log(t);
+    //     // console.log(i);
+    //     var evaluated = dsq(t[0],t[1]) < asq && dsq(t[0],t[2]) < asq && dsq(t[1],t[2]) < asq;
+    //     if(!evaluated){
+    //       evalArr.push(i);
+    //     }
+    //     return evaluated;
+    // });
+    evalArr.reverse().forEach(function(e){
+      vertices.splice(e, 1);
+    });
+
+
     diagram = voronoi(samples);
     links = diagram.links();
     polygons = diagram.polygons();
     triangles = diagram.triangles();
+
   };
   return {
     init : function(width, height){
       sampleing(width,height);
       initVoronoi(width,height);
       return {
+          vertices : vertices,
           samples : samples,
           voronoi : voronoi,
           diagram : diagram,
@@ -49,18 +89,34 @@ var springWaltz = springWaltz || {
     'mouseup' : 0.3,
     'mousehold' : 0.4,
   },
+  meltRandArr : [],
   now : 0,
   then : Date.now(),
   interval : 1000/30,   //frame late
   delta : 0,
+  barsArr1 : [],
+  barsArr2 : [],
+  barsArr3 : [],
+  barsArr4 : [],
+  meltTriArrs : [],
+  mouseX : 0,
+  mouseY : 0,
   initialize : function(){
     this.initCanvas();
     this.initImage();
 
-    var maker = new voronoiMaker(100);
+    var maker = new voronoiMaker(40);
     var voronoiObj = maker.init(this.width, this.height);
     this.voronoiArr.push(voronoiObj);
-    // this.startAudio();
+    this.startAudio();
+
+    var randNum = Math.floor((Math.random() * 50) - 10);
+    var randNum = 300;
+    var samplesLength = voronoiObj.samples.length;
+    for(var i = 0; i < randNum; i++){
+      this.meltRandArr.push( Math.floor((Math.random() * samplesLength)));
+    };
+    // console.log('this.meltRandArr : '  + JSON.stringify(this.meltRandArr));
     this.startAnimation();
   },
   initImage : function(){
@@ -84,14 +140,17 @@ var springWaltz = springWaltz || {
     springWaltz.mouseTimeOut = setTimeout(springWaltz.mousehold, 500);
   },
   mousehold : function(){
+    // console.log('mousehold');
     springWaltz.mouseholding = true;
   },
   mouseup : function() {
     if (springWaltz.mouseTimeOut){
       clearTimeout(springWaltz.mouseTimeOut);
     };
+    // console.log('mouseup');
     springWaltz.mouseholding = false;
     var samp = springWaltz.diagramFind('mouseup', d3.mouse(this)[0],d3.mouse(this)[1], 50);
+    // console.log('samp: ' + samp);
     if(typeof samp !== 'undefined' && samp !== null){
       springWaltz.voronoiArr[0].samples[samp.index].mouseup = true;
       springWaltz.userAction = true;
@@ -99,6 +158,7 @@ var springWaltz = springWaltz || {
     };
   },
   mousemoved : function() {
+    // console.log('mousemoved');
     var type = 'mousemove';
     if(springWaltz.mouseholding){
       type = 'mousehold';
@@ -108,9 +168,14 @@ var springWaltz = springWaltz || {
       springWaltz.voronoiArr[0].polygons[samp.index].background = 'red';
       springWaltz.voronoiArr[0].samples[samp.index].mousemoved = true;
       springWaltz.userAction = true;
+      springWaltz.meltTriArrs = [];
       // springWaltz.start();
     }
+    springWaltz.mouseX = d3.mouse(this)[0];
+    springWaltz.mouseY = d3.mouse(this)[1];
+    // springWaltz.startEqulizer(d3.mouse(this)[0],d3.mouse(this)[1]);
   },
+  
   startAudio : function(){
     var that = this;
     that.audioVis = new AudioVisualizer();
@@ -120,26 +185,135 @@ var springWaltz = springWaltz || {
     that.audioNode.onaudioprocess = function () {
 
         // get the average for the first channel
-        var array = new Uint8Array(that.audioVis.analyser.frequencyBinCount);
-        that.audioVis.analyser.getByteFrequencyData(array);
+        var array1 = new Float32Array(that.audioVis.analyser.frequencyBinCount);
+        that.audioVis.analyser.getFloatFrequencyData(array1);
+
+        var array2 = new Uint8Array(that.audioVis.analyser.frequencyBinCount);
+        that.audioVis.analyser.getByteFrequencyData(array2);
+
+        var array3 = new Float32Array(that.audioVis.analyser.frequencyBinCount);
+        that.audioVis.analyser.getFloatTimeDomainData(array3);
+
+        var array4 = new Uint8Array(that.audioVis.analyser.frequencyBinCount);
+        that.audioVis.analyser.getByteTimeDomainData(array4);
+        
 
         //render the scene and update controls
         // that.audioVis.renderer.render(that.audioVis.scene, that.audioVis.camera);
         // that.audioVis.controls.update();
 
-        var step = Math.round(array.length / that.audioVis.numberOfBars);
+        var step1 = Math.round(array1.length / that.audioVis.numberOfBars);
+        var step2 = Math.round(array2.length / that.audioVis.numberOfBars);
+        var step3 = Math.round(array3.length / that.audioVis.numberOfBars);
+        var step4 = Math.round(array4.length / that.audioVis.numberOfBars);
 
         // console.log('step : ' + JSON.stringify(step));
         // console.log('array : ' + JSON.stringify(array));
 
         //Iterate through the bars and scale the z axis
         for (var i = 0; i < that.audioVis.numberOfBars; i++) {
-            var value = array[i * step] / 4;
-            value = value < 1 ? 1 : value;
+            var value1 = array1[i * step1] / 4;
+            var value2 = array2[i * step2] * 10;
+            var value3 = array3[i * step3] / 4;
+            var value4 = array4[i * step4] / 4;
+            // value = value < 1 ? 1 : value;
             // console.log('value : ' + value);
+            
             // that.audioVis.bars[i].scale.z = value;
+            that.barsArr1[i] = value1;
+            that.barsArr2[i] = value2;
+            that.barsArr3[i] = value3;
+            that.barsArr4[i] = value4;
         }
+
+        
     }
+  },
+  startEqulizer : function(){
+    var that = this;
+    var context = this.context;
+    var vertices = this.voronoiArr[0].vertices;
+    var height = this.height;
+    var width = this.width;
+    var bars1 = this.barsArr1;
+    var bars2 = this.barsArr2;
+    var bars3 = this.barsArr3;
+    var bars4 = this.barsArr4;
+    var barW = width / (bars1.length+1);
+    // console.log('bars1.length : '  + bars1.length);
+    // console.log('height : ' + height);
+    // bars1.forEach(function(b, i){
+
+    //   // console.log(b);
+    //   // console.log(height-b*10);
+    //   context.beginPath();
+    //   context.rect(barW*i,height,barW,(b*10));
+    //   // context.rect(width-barW*i,0,barW,(b*13));
+    //   // context.rect(width,(b*3),-barW*i,(b*13));
+
+    //   context.strokeStyle = 'red';
+    //   context.fillStyle = 'rgba(255,255,255,0.5)';
+    //   context.stroke();
+    //   context.fill();
+    //   context.closePath();
+    // })
+    that.voronoiArr[0].vertices = [];
+    // bars2.forEach(function(b, i){
+    //   // console.log(b);
+    //   // console.log(height-b*10);
+    //   context.beginPath();
+    //   context.rect(barW*i,height,barW,-(b*0.1));
+
+    //   that.voronoiArr[0].vertices.push([(barW*i+(barW/2)),(b*0.1)]);
+    //   // context.rect(width-barW*i,0,barW,(b*13));
+    //   // context.rect(width,(b*3),-barW*i,(b*13));
+      
+    //   // context.strokeStyle = 'orange';
+    //   // context.fillStyle = 'rgba(255,255,255,0.5)';
+    //   // context.stroke();
+    //   // context.fill();
+    //   // context.closePath();
+    // })
+
+    var perAngle = 360 / bars3.length;
+
+    // bars3.forEach(function(b, i){
+      // console.log(b);
+      // console.log(height-b*10);
+      // context.beginPath();
+      // context.rect(barW*i,height/2,barW,(b*3000));
+      // that.voronoiArr[0].vertices.push([(barW*i+(barW/2)),(height/2+(b*500))]);
+
+      
+      // context.rect(width-barW*i,0,barW,(b*13));
+      // context.rect(width,(b*3),-barW*i,(b*13));
+      
+      // context.strokeStyle = 'blue';
+      // context.fillStyle = 'rgba(255,255,255,0.5)';
+      // context.stroke();
+      // context.fill();
+      // context.closePath();
+    // })
+    that.meltTriArrs = [];
+    bars4.forEach(function(b, i){
+    //   // console.log(b);
+    //   // console.log(height-b*10);
+    //   // context.beginPath();
+    //   // context.rect(barW*i,height,barW,-(-height/2+b*10));
+    //   // context.rect(width-barW*i,0,barW,(b*13));
+    //   // context.rect(width,(b*3),-barW*i,(b*13));
+    //   // context.strokeStyle = 'green';
+    //   // context.fillStyle = 'rgba(255,255,255,0.5)';
+    //   // context.stroke();
+    //   // context.fill();
+    //   // context.closePath();
+        
+        that.meltTriArrs.push([
+          that.mouseX + Math.sin(perAngle*i) * (b*5)
+          ,that.mouseY + Math.cos(perAngle*i) * (b*5)
+        ]);
+    })
+
   },
   startAnimation : function(){
     window.requestAnimationFrame(this.startAnimation.bind(this));
@@ -149,11 +323,56 @@ var springWaltz = springWaltz || {
       if(this.userAction){
         this.then = this.now - (this.delta % this.interval);
         this.context.drawImage(this.backImgae, 0, 0);
+        // this.context.clearRect(0,0,this.width, this.height);
+
         this.imageData = this.context.getImageData(0, 0, this.width, this.height);
         this.startVoronoi();
-        this.userAction = false;
+        // this.userAction = false;
       }
     };
+  },
+  meltRandom : function(){
+    var samples = this.voronoiArr[0].samples;
+    this.meltRandArr.forEach(function(m, i){
+      if(typeof samples[m].melting === 'undefined'){
+        samples[m].melting = Math.random() - 0.5;
+      }else{
+        samples[m].melting += 0.05;
+      }
+    });
+  },
+  drawCircles : function(x,y,type){
+    var that = this;
+    var context = that.context;
+    var width = that.width;
+    var height = that.height;
+    var imageData = that.imageData;
+    var samples = that.voronoiArr[0].samples;
+    var polygons = that.voronoiArr[0].polygons;
+    var topology = spwUtils.computeTopology(that.voronoiArr[0].voronoi(samples));
+
+    // context.fillStyle = "rgba(0,0,0,0.5)";
+    // context.fillRect(0,0,width, height);
+    samples.forEach(function(p, i) {
+      context.beginPath();
+      // var melting =   Math.random() + 0.7;
+      var melting = 1;
+      if(typeof p.melting !== 'undefined'){
+        melting = (1 - p.melting);
+      };
+      // console.log('melting : ' + melting);
+      // var r = melting * 300;
+      context.arc(p[0], p[1], 30, 0, 2 * Math.PI);
+      context.fillStyle =  "rgba(255,255,255,"+melting+")";
+      context.fill();
+    });
+
+    // var context = this.context;
+    // var r = this.mouseStrength[type] * 300;
+    // context.beginPath();
+    // context.arc(x, y, r, 0, 2 * Math.PI);
+    // context.fillStyle =  "rgba(255,255,255,0.1)";
+    // context.fill();
   },
   drawInnerLine : function(){
     var that = this;
@@ -164,16 +383,16 @@ var springWaltz = springWaltz || {
     var samples = that.voronoiArr[0].samples;
 
     // var polygonsClone = JSON.parse(JSON.stringify(polygons));
-    for (var i = 0; i < 1; ++i) {
+    for (var i = 0; i < 25; ++i) {
       polygons.forEach(function(cell, j) {
         // if( j & 1) return;
         var p0 = cell.shift(),
             p1 = cell[0],
             t = Math.min(0.001, 200 / that.getDistance(p0, p1));
         if(typeof polygons[j].melting !== 'undefined'){
-          console.log('polygons[j].melting : ' + polygons[j].melting);
+          // console.log('polygons[j].melting : ' + polygons[j].melting);
           t = Math.max(0.1, polygons[j].melting);
-          delete polygons[j].melting;
+          // delete polygons[j].melting;
         }
         var p2 = [p0[0] * (1 - t) + p1[0] * t, p0[1] * (1 - t) + p1[1] * t];
         context.beginPath();
@@ -182,6 +401,8 @@ var springWaltz = springWaltz || {
         var rgba = spwUtils.squareSampleImage(imageData, p0[0], p0[1], 3, width);
         rgba.opacity = Math.random();
         context.strokeStyle =  rgba + "";
+        context.strokeStyle =  "rgba(255,255,255,"+t+")";
+        // context.strokeStyle =  'rgba(255,255,255,0.6)';
         context.stroke();
 
         // var rgba1 = spwUtils.squareSampleImage(imageData, p1[0], p1[1], 3, width);
@@ -208,20 +429,101 @@ var springWaltz = springWaltz || {
     var polygons = that.voronoiArr[0].polygons;
     var topology = spwUtils.computeTopology(that.voronoiArr[0].voronoi(samples));
 
-    context.beginPath();
-    var geo = topology.objects.voronoi.geometries;
-    spwUtils.renderMultiPolygon(context, topojson.merge(topology, geo.filter(function(d, i) { 
-      return i & 1; 
-    })), width, height);
-    // context.fillStyle = "rgba(255,0,0,0.1)";
-    context.fillStyle = "rgba(255,255,255,0.3)";
-    context.fill();
-    context.lineWidth = 1.5;
-    context.lineJoin = "round";
-    // context.strokeStyle = "rgba(255,0,0,1)";
-    context.strokeStyle = "rgba(255,255,255,1)";
-    context.stroke();
-    context.closePath();
+    
+    // var geo = topology.objects.voronoi.geometries;
+    // var geoMerge = topojson.merge(topology, geo.filter(function(d, i) { 
+    //   return i & 1; 
+    // }));
+    if(typeof that.geoMerge === 'undefined'){
+      that.geo = topology.objects.voronoi.geometries;
+      that.geoMerge = topojson.merge(topology, that.geo.filter(function(d, i) { 
+        // return i & 1; 
+        return i % 3;
+      }));;
+    };
+
+
+
+    // for (var k = 0; k < 30; ++k) {
+      // that.geoMerge.coordinates.forEach(function(polygon) {
+      //   var polLength = polygon.length;
+      //   polygon.forEach(function(ring, j) {
+      //       // console.log('ring : ' + JSON.stringify(ring));
+      //       // if( j & 1) return;
+      //       var p0 = ring.shift(),
+      //           p1 = ring[0],
+      //           t = Math.min(0.01, 4 / that.getDistance(p0, p1));
+      //       // if(typeof polygons[i].melting !== 'undefined'){
+      //       //   console.log('polygons[i].melting : ' + polygons[i].melting);
+      //       //   t = Math.max(0.1, polygons[i].melting);
+      //       //   delete polygons[i].melting;
+      //       //   context.beginPath();
+      //       //   that.drawCell(polygons[i]);
+      //       //   context.fillStyle="red";
+      //       //   context.fill();
+      //       // }
+      //       var p2 = [p0[0] * (1 - t) + p1[0] * t, p0[1] * (1 - t) + p1[1] * t  + 5 * polLength];
+      //       context.beginPath();
+      //       that.drawCell(ring);
+      //       ring.push(p2);
+      //       var rgba = spwUtils.squareSampleImage(imageData, p0[0], p0[1], 3, width);
+      //       rgba.opacity = 0.1;
+      //       // context.strokeStyle =  rgba + "";
+      //       // context.stroke();
+      //       context.fillStyle = 'rgba(255,255,255,0.5)';
+      //       context.fill();
+      //       context.closePath();
+      //     });
+      // });
+    // };
+
+
+    
+    that.geoMerge.coordinates.forEach(function(polygon) {
+      polygon.forEach(function(ring, i) {
+        context.beginPath();
+        spwUtils.renderSinglePolygon(context, ring, width, height);
+
+        // var rgba1 = spwUtils.squareSampleImage(imageData, p1[0], p1[1], 3, width);
+        // var rgba2 = spwUtils.squareSampleImage(imageData, p2[0], p2[1], 3, width);
+        var rgba1 = 'rgba(0,0,0,0.7)';
+        var rgba2 = 'rgba(0,0,0,0.3)';
+        var rgba3 = 'rgba(0,0,0,0)';
+        var rgba4 = 'rgba(255,255,255,0.1)';
+        var rgba5 = 'rgba(255,255,255,0.1)';
+        // var randomOpa = Math.random()-0.7;
+        // rgba1.opacity = randomOpa;
+        // rgba2.opacity = randomOpa;
+        // var grd=context.createLinearGradient(ring[0][0],ring[0][1],ring[0][0],ring[0][1]);
+        // var grd=context.createLinearGradient(0,0,width,height);
+        // grd.addColorStop(0,rgba1 + "");
+        // grd.addColorStop(0.3,rgba2 + "");
+        // grd.addColorStop(0.6,rgba3 + "");
+        // grd.addColorStop(0.98,rgba4 + "");
+        // grd.addColorStop(1,rgba5 + "");
+        // context.fillStyle=grd;
+        context.fillStyle = "rgba(255,255,255,0.7)";
+        context.fill();
+        context.lineWidth = 1.5;
+        context.lineJoin = "miter";
+        // context.strokeStyle = "rgba(255,0,0,1)";
+        context.strokeStyle = "rgba(255,255,255,1)";
+        context.stroke();
+        context.closePath();
+      })
+    });
+    
+    // context.beginPath();
+    // spwUtils.renderMultiPolygon(context, that.geoMerge, width, height);
+    // // context.fillStyle = "rgba(255,0,0,0.1)";
+    // context.fillStyle = "rgba(255,255,255,0.8)";
+    // context.fill();
+    // context.lineWidth = 1.5;
+    // context.lineJoin = "miter";
+    // // context.strokeStyle = "rgba(255,0,0,1)";
+    // context.strokeStyle = "rgba(255,255,255,1)";
+    // context.stroke();
+    // context.closePath();
 
     //stoke of polygons
     // context.beginPath();
@@ -270,9 +572,15 @@ var springWaltz = springWaltz || {
   drawBasic : function(){
     var x, y = 0;
     var that = this;
+    var width = that.width;
+    var height = that.height;
     var context = that.context;
     var samples = that.voronoiArr[0].samples;
+    var voronoi = that.voronoiArr[0].voronoi;
+    var vertices = that.voronoiArr[0].vertices;
     var polygons = that.voronoiArr[0].polygons;
+    var triangles = that.voronoiArr[0].triangles;
+    var links = that.voronoiArr[0].links;
     var imageData = that.imageData;
     var width = that.width;
     var height = that.height;
@@ -280,23 +588,29 @@ var springWaltz = springWaltz || {
     for (var i = 0, n = polygons.length; i < n; ++i){
       context.beginPath();
 
-      x = Math.floor(samples[i][0]),
-      y = Math.floor(samples[i][1]);
+      x = Math.floor(polygons[i].data[0]),
+      y = Math.floor(polygons[i].data[1]);
 
       // context.fillStyle = pointSampleImage(imageData, x, y) + "";
       // console.log(squareSampleImage(imageData, x, y, 3));
 
       var rgba = spwUtils.squareSampleImage(imageData, x, y, 3, width);
-      if(typeof samples[i].mouseup !== 'undefined'){
-        // rgba.opacity = samples[i][2];
-        rgba.opacity = 0.5;
-      }else{
-        rgba.opacity = 0.8;
-      };
+      // if(typeof samples[i].mouseup !== 'undefined'){
+      //   // rgba.opacity = samples[i][2];
+      //   rgba.opacity = 0.5;
+      // }else{
+      //   rgba.opacity = 0.8;
+      // };
 
       context.fillStyle =  rgba + "";
-      if(typeof polygons[i].background !== 'undefined'){
+
+      if(typeof polygons[i] !== 'undefined' && typeof polygons[i].background !== 'undefined'){
         context.fillStyle =  polygons[i].background;
+        // that.meltTriArrs = [];
+        polygons[i].forEach(function(pp,ii){
+          that.meltTriArrs.push([(pp[0]),(pp[1])]);
+        });
+        
         delete polygons[i].background;
       }
       that.drawCell(polygons[i]);
@@ -306,26 +620,69 @@ var springWaltz = springWaltz || {
       context.closePath();
     };
 
+    var alpha = 200;
+    var asq = alpha*alpha;
+    function dsq(a,b) {
+        var dx = a[0]-b[0], dy = a[1]-b[1];
+        return dx*dx+dy*dy;
+    };
+    function offset(a,dx,dy) {
+          return a.map(function(d) { return [d[0]+dx,d[1]+dy]; });
+    };
+    console.log('that.meltTriArrs.length : ' + that.meltTriArrs.length);
+    var triangles = voronoi(that.meltTriArrs).triangles().filter(function(t, i) {
+        // console.log(t);
+        // console.log(i);
+        var evaluated = dsq(t[0],t[1]) < asq && dsq(t[0],t[2]) < asq && dsq(t[1],t[2]) < asq;
+        return evaluated;
+    });
+    
+    // triangles
+    for (var i = 0, n = triangles.length; i < n; ++i){
+      context.beginPath();
+      that.drawCell(triangles[i]);
+      context.fillStyle =  "rgba(255,255,255,0.5)";
+      // if(typeof polygons[i] !== 'undefined' && typeof polygons[i].background !== 'undefined'){
+      //   context.fillStyle =  polygons[i].background;
+      //   delete polygons[i].background;
+      // }
+      context.strokeStyle =  "rgba(0,0,0,0.5)";
+      context.stroke();
+      context.fill();
+      context.closePath();
+    };
 
     // // 링크
     // context.beginPath();
-    // for (var i = 0, n = links.length; i < n; ++i) drawLink(links[i]);
+    // for (var i = 0, n = links.length; i < n; ++i) that.drawLink(links[i]);
     // context.strokeStyle = "#fff";
     // context.stroke();
-    // context.beginPath();
 
-    // //사이트
-    // for (var i = 1, n = samples.length; i < n; ++i) drawSite(samples[i]);
+    //사이트
+    // context.beginPath();
+    // for (var i = 0, n = vertices.length; i < n; ++i){
+    //   // context.font = "20px Arial";
+    //   // context.fillStyle = "#fff";
+    //   // context.fillText(i,vertices[i][0],vertices[i][1]);
+    //   that.drawSite(vertices[i])
+    // };
     // context.fillStyle = "black";
     // context.fill();
     // context.strokeStyle = "yellow";
     // context.stroke();
+    // context.closePath();
+
   },
   startVoronoi : function(){
     console.log('startVoronoi');
-    this.drawInnerCircle();
-    this.drawInnerLine();
-    this.drawTopology();
+    this.startEqulizer();
+    // this.meltRandom();
+    // this.drawCircles();
+
+    
+    // this.drawInnerCircle();
+    // this.drawInnerLine();
+    // this.drawTopology();
     this.drawBasic();
   },
   diagramFind : function(type, x, y, radius){
@@ -341,13 +698,13 @@ var springWaltz = springWaltz || {
     do {
       cell = diagram.cells[i=next];
       next = null;
-
       polygons[i].background = 'orange';
       if(typeof polygons[i].melting === 'undefined'){
         polygons[i].melting = 0;
+        samples[i].melting = 0.9;
       };
+      
       polygons[i].melting = that.mouseStrength[type];
-
       cell.halfedges.forEach(function(e) {
         var edge = diagram.edges[e];
         var ea = edge.left;
@@ -359,9 +716,16 @@ var springWaltz = springWaltz || {
             polygons[ea.index].background = 'green';
             if(typeof polygons[ea.index].melting === 'undefined'){
               polygons[ea.index].melting = 0;
+              samples[ea.index].melting = 0;
             };
             polygons[ea.index].melting = that.mouseStrength[type] * 0.5;
+            
           };
+
+          if(typeof samples[ea.index].melting === 'undefined'){
+            samples[ea.index].melting = 0.9;
+          };
+          samples[ea.index].melting += that.mouseStrength[type];
           var dx = x - ea[0],
               dy = y - ea[1],
               ndist = dx*dx + dy*dy;

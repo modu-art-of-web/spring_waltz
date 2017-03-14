@@ -95,13 +95,16 @@ var spwUtils = spwUtils || function() {
           objects: {
             voronoi: {
               type: "GeometryCollection",
-              geometries: cells.map(function(cell) {
+              geometries: cells.map(function(cell, index) {
                 var cell,
                     site = cell.site,
                     halfedges = cell.halfedges,
+                    cellIndex = index,
                     cellArcs = [],
                     clipArc;
-
+                    // console.log('cellIndex : ' + cellIndex);
+                    // site.data.push(cellIndex);
+                    // console.log('cell : ' + JSON.stringify(cell));
                 halfedges.forEach(function(halfedge) {
                   var edge = diagram.edges[halfedge];
                   if (edge.right) {
@@ -131,6 +134,7 @@ var spwUtils = spwUtils || function() {
                 return {
                   type: "Polygon",
                   data: site.data,
+                  cellIndex: cellIndex,
                   arcs: [cellArcs]
                 };
               })
@@ -170,6 +174,27 @@ var spwUtils = spwUtils || function() {
               };
             });
           });
+        });
+      },
+      renderSinglePolygon : function (context, ring, width, height, trans = 0) {
+        var that = this;
+        var padX = trans;
+        var padY = trans;
+
+        ring.forEach(function(point, i) {
+          if(trans !== 0){
+            if(point[0] === 0 || point[0] === width){
+              padX = 0;
+            }
+            if(point[1] === 0 || point[1] === height){
+              padY = 0;
+            }
+          };
+          if(i > 0){
+            context.lineTo(point[0] + padX, point[1] + padY);
+          }else{
+            context.moveTo(point[0] + padX, point[1] + padY);
+          };
         });
       },
       renderMultiPolygon : function (context, polygon, width, height, trans = 0) {
