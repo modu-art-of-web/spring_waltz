@@ -90,6 +90,7 @@ var springWaltz = springWaltz || {
   imageData : {},
   canvas : {},
   context : {},
+  video : {},
   voronoiArr : [],
   angle : 0,
   audioVis : {},
@@ -117,31 +118,68 @@ var springWaltz = springWaltz || {
   rythmX : 0,
   rythmY : 0,
   initialize : function(){
-    this.initCanvas();
-    this.initImage();
+    var that = this;
+    that.initCanvas();
+    var maker = new voronoiMaker(60);
+    var voronoiObj = maker.init(that.width, that.height);
+    that.voronoiArr.push(voronoiObj);
+    that.startAudio();
 
-    var maker = new voronoiMaker(40);
-    var voronoiObj = maker.init(this.width, this.height);
-    this.voronoiArr.push(voronoiObj);
-    this.startAudio();
+    // that.initImage();
+    that.initVideo();
 
     var randNum = Math.floor((Math.random() * 50) - 10);
     var randNum = 300;
     var samplesLength = voronoiObj.samples.length;
     for(var i = 0; i < randNum; i++){
-      this.meltRandArr.push( Math.floor((Math.random() * samplesLength)));
+      that.meltRandArr.push( Math.floor((Math.random() * samplesLength)));
     };
-    // console.log('this.meltRandArr : '  + JSON.stringify(this.meltRandArr));
-    this.startAnimation();
+    // console.log('that.meltRandArr : '  + JSON.stringify(that.meltRandArr));
+    // that.startAnimation();
   },
   initImage : function(){
-    this.backImgae = new Image;
-    this.backImgae.src = this.backImgaeSrc;
-    // this.backImgae.onload = this.startAnimation;
+    var that = this;
+    that.backImgae = new Image;
+    that.backImgae.src = that.backImgaeSrc;
+    that.startAnimation();
+    // window.onload = function(){
+    //   that.backImgae = new Image;
+    //   that.backImgae.src = that.backImgaeSrc;
+    //   that.startAnimation();
+    // }
   },
+  initVideo : function(){
+    var that = this;
+    that.video = document.getElementById("theVideo");
+    if(typeof that.video.readyState !== 'undefined' && that.video.readyState === 4 ) {
+      var canvas = that.canvas;
+      var context = that.context;
+      // that.drawVideo(context, that.video, canvas.width, canvas.height);
+      that.backImgae = that.video;
+      that.startAnimation();
+    }else{
+      that.video.addEventListener('loadeddata', function() {
+        var canvas = that.canvas;
+        var context = that.context;
+        // that.drawVideo(context, that.video, canvas.width, canvas.height);
+        that.backImgae = that.video;
+        that.startAnimation();
+      });
+    }
+  },
+  // drawVideo : function(context, video, width, height) {  
+    // var that = this;
+    // console.log('drawVideo');    
+    // this.backImgae = video;
+    // context.drawImage(video, 0, 0, width, height); // draws current video frame to canvas     
+    // var delay = 100; // milliseconds delay for slowing framerate
+    // setTimeout(that.drawVideo, delay, context, video, width, height); // recursively calls drawVideo() again after delay
+  // },
   initCanvas : function(){
     this.width = window.innerWidth;
     this.height = window.innerHeight;
+    this.mouseX = this.width/2;
+    this.mouseY = this.height/2;
     this.canvas = d3.select("body").append("canvas")
         .attr("width", this.width)
         .attr("height", this.height);
@@ -207,10 +245,15 @@ var springWaltz = springWaltz || {
         that.audioVis.analyser.getByteFrequencyData(array2);
 
         var array3 = new Float32Array(that.audioVis.analyser.frequencyBinCount);
-        that.audioVis.analyser.getFloatTimeDomainData(array3);
+        that.audioVis.analyser.getFloatFrequencyData(array3);
 
         var array4 = new Uint8Array(that.audioVis.analyser.frequencyBinCount);
-        that.audioVis.analyser.getByteTimeDomainData(array4);
+        that.audioVis.analyser.getByteFrequencyData(array4);
+        // var array3 = new Float32Array(that.audioVis.analyser.frequencyBinCount);
+        // that.audioVis.analyser.getFloatTimeDomainData(array3);
+
+        // var array4 = new Uint8Array(that.audioVis.analyser.frequencyBinCount);
+        // that.audioVis.analyser.getByteTimeDomainData(array4);
         
 
         //render the scene and update controls
@@ -259,13 +302,17 @@ var springWaltz = springWaltz || {
 
     var perAngle = 360 / bars3.length;
 
-    // that.rythmX += 5;
-    // that.rythmY = Math.cos(that.rythmX) * 30;
-    // samples.push([
-    //   that.rythmX
-    //   ,that.rythmY
-    // ]);
-    // samples[samples.length - 1].melting = 0.3;
+    // for(var i=0; i < 90; i++){
+    //   that.rythmX = 5*i;
+    //   that.rythmY = 5*i;
+    //   samples.push([
+    //     that.rythmX
+    //     ,that.rythmY
+    //   ]);
+    //   samples[samples.length - 1].melting = 0.3;
+    //   samples[samples.length - 1].musics = true;
+    // }
+    
     // samples[samples.length - 1].musics = true;
 
     // console.log('bars1.length : '  + bars1.length);
@@ -344,16 +391,25 @@ var springWaltz = springWaltz || {
     //   // context.fill();
     //   // context.closePath();
 
+        // that.rythmX = Math.random() * 5*i;
+        // that.rythmY = Math.random() * 5*i;
+        // samples.push([
+        //   that.rythmX
+        //   ,that.rythmY
+        // ]);
+        // samples[samples.length - 1].melting = 0.3;
+        // samples[samples.length - 1].musics = true;
+
         samples.push([
-          that.mouseX + Math.sin(perAngle*i) * (b*2)
-          ,that.mouseY + Math.cos(perAngle*i) * (b*2)
-        ]);
-        samples[samples.length - 1].melting = 0.9;
-        samples[samples.length - 1].musics = true;
-        that.meltTriArrs.push([
           that.mouseX + Math.sin(perAngle*i) * (b*5)
           ,that.mouseY + Math.cos(perAngle*i) * (b*5)
         ]);
+        samples[samples.length - 1].melting = 0.9;
+        samples[samples.length - 1].musics = true;
+        // that.meltTriArrs.push([
+        //   that.mouseX + Math.sin(perAngle*i) * (b*5)
+        //   ,that.mouseY + Math.cos(perAngle*i) * (b*5)
+        // ]);
     })
 
   },
@@ -364,14 +420,23 @@ var springWaltz = springWaltz || {
     if (this.delta > this.interval) {
       if(this.userAction){
         this.then = this.now - (this.delta % this.interval);
+        // console.log('this.backImgae : ' + this.backImgae);
+        // console.log('this.backImgae : ' + JSON.stringify(this.backImgae));
+        // console.log('this.backImgae.duration : ' + JSON.stringify(this.backImgae.duration));
+        // console.log('this.backImgae.currentTime : ' + JSON.stringify(this.backImgae.currentTime));
         this.context.drawImage(this.backImgae, 0, 0);
+        
+        // this.context.fillStyle = 'red';
+        // this.context.fillRect(0,0,this.width, this.height);
         // this.context.clearRect(0,0,this.width, this.height);
 
         this.imageData = this.context.getImageData(0, 0, this.width, this.height);
-        this.startVoronoi();
+        if(this.backImgae.currentTime !== 0){
+          this.startVoronoi();
+        }
         // this.userAction = false;
       }
-    };
+    }
   },
   meltRandom : function(){
     var samples = this.voronoiArr[0].samples;
@@ -671,7 +736,7 @@ var springWaltz = springWaltz || {
     function offset(a,dx,dy) {
           return a.map(function(d) { return [d[0]+dx,d[1]+dy]; });
     };
-    console.log('that.meltTriArrs.length : ' + that.meltTriArrs.length);
+    // console.log('that.meltTriArrs.length : ' + that.meltTriArrs.length);
     var triangles = voronoi(samples.filter(function(s, i) {
       if(typeof s.musics !== 'undefined'){
         samples.splice(i,1);
@@ -763,12 +828,12 @@ var springWaltz = springWaltz || {
     //사이트
     // context.beginPath();
     // for (var i = 0, n = samples.length; i < n; ++i){
-    //   if(typeof samples[i].melting !== 'undefined'){
-    //     context.font = "20px Arial";
-    //     context.fillStyle = "#fff";
-    //     context.fillText(samples[i].melting,samples[i][0],samples[i][1]);
+    //   // if(typeof samples[i].melting !== 'undefined'){
+    //   //   context.font = "20px Arial";
+    //   //   context.fillStyle = "#fff";
+    //   //   context.fillText(samples[i].melting,samples[i][0],samples[i][1]);
     //     that.drawSite(samples[i])
-    //   }
+    //   // }
     // };
     // context.fillStyle = "black";
     // context.fill();
@@ -778,7 +843,7 @@ var springWaltz = springWaltz || {
 
   },
   startVoronoi : function(){
-    console.log('startVoronoi');
+    // console.log('startVoronoi');
     this.startEqulizer();
     // this.meltRandom();
     // this.drawCircles();
@@ -885,4 +950,20 @@ var springWaltz = springWaltz || {
 
 };
 
-springWaltz.initialize();
+window.onload = function(){
+  // var playButton = document.getElementById('play_spring_waltz');
+  var playButton = d3.select('#play_spring_waltz');
+  console.log('playButton : ' + playButton);
+  
+  if(playButton._groups[0][0] !== null){
+    playButton.on('click', function() {
+        console.log('click');
+        springWaltz.initialize();
+        // d3.select('#start_container').hide();
+        this.parentNode.style.display = 'none';
+    });
+  }else{
+    springWaltz.initialize();
+  }
+  
+};

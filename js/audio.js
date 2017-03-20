@@ -22,56 +22,66 @@ function AudioVisualizer() {
     this.analyser;
 }
 AudioVisualizer.prototype.setupAudioProcessing = function () {
-    //get the audio context
-    this.audioContext = new AudioContext();
 
-    //create the javascript node
-    this.javascriptNode = this.audioContext.createScriptProcessor(2048, 1, 1);
-    this.javascriptNode.connect(this.audioContext.destination);
+    var audioCtx = window.AudioContext // Default
+    || window.webkitAudioContext // Safari and old versions of Chrome
+    || false;
 
-    //create the source buffer
-    this.sourceBuffer = this.audioContext.createBufferSource();
+    
+    if(audioCtx){
+        //get the audio context
+        this.audioContext = new audioCtx;
+        // this.audioContext = new AudioContext();
 
-    //create the analyser node
-    this.analyser = this.audioContext.createAnalyser();
-    this.analyser.smoothingTimeConstant = 0.3;
-    this.analyser.fftSize = 512;
+        //create the javascript node
+        this.javascriptNode = this.audioContext.createScriptProcessor(2048, 1, 1);
+        this.javascriptNode.connect(this.audioContext.destination);
 
-    //connect source to analyser
-    this.sourceBuffer.connect(this.analyser);
+        //create the source buffer
+        this.sourceBuffer = this.audioContext.createBufferSource();
 
-    //analyser to speakers
-    this.analyser.connect(this.javascriptNode);
+        //create the analyser node
+        this.analyser = this.audioContext.createAnalyser();
+        this.analyser.smoothingTimeConstant = 0.3;
+        this.analyser.fftSize = 512;
 
-    //connect source to analyser
-    this.sourceBuffer.connect(this.audioContext.destination);
+        //connect source to analyser
+        this.sourceBuffer.connect(this.analyser);
 
-    var that = this;
+        //analyser to speakers
+        this.analyser.connect(this.javascriptNode);
 
-    //this is where we animates the bars
-    // this.javascriptNode.onaudioprocess = function () {
+        //connect source to analyser
+        this.sourceBuffer.connect(this.audioContext.destination);
 
-    //     // get the average for the first channel
-    //     var array = new Uint8Array(that.analyser.frequencyBinCount);
-    //     that.analyser.getByteFrequencyData(array);
+        var that = this;
 
-    //     //render the scene and update controls
-    //     // audioVis.renderer.render(audioVis.scene, audioVis.camera);
-    //     // audioVis.controls.update();
+        //this is where we animates the bars
+        // this.javascriptNode.onaudioprocess = function () {
 
-    //     var step = Math.round(array.length / audioVis.numberOfBars);
+        //     // get the average for the first channel
+        //     var array = new Uint8Array(that.analyser.frequencyBinCount);
+        //     that.analyser.getByteFrequencyData(array);
 
-    //     // console.log('step : ' + JSON.stringify(step));
-    //     // console.log('array : ' + JSON.stringify(array));
+        //     //render the scene and update controls
+        //     // audioVis.renderer.render(audioVis.scene, audioVis.camera);
+        //     // audioVis.controls.update();
 
-    //     //Iterate through the bars and scale the z axis
-    //     for (var i = 0; i < audioVis.numberOfBars; i++) {
-    //         var value = array[i * step] / 4;
-    //         value = value < 1 ? 1 : value;
-    //         // console.log('value : ' + value);
-    //         // audioVis.bars[i].scale.z = value;
-    //     }
-    // }
+        //     var step = Math.round(array.length / audioVis.numberOfBars);
+
+        //     // console.log('step : ' + JSON.stringify(step));
+        //     // console.log('array : ' + JSON.stringify(array));
+
+        //     //Iterate through the bars and scale the z axis
+        //     for (var i = 0; i < audioVis.numberOfBars; i++) {
+        //         var value = array[i * step] / 4;
+        //         value = value < 1 ? 1 : value;
+        //         // console.log('value : ' + value);
+        //         // audioVis.bars[i].scale.z = value;
+        //     }
+        // }
+    }
+    
 };
 //get the default audio from the server
 AudioVisualizer.prototype.getAudio = function () {
