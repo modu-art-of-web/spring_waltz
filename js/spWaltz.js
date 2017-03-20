@@ -103,11 +103,15 @@ var springWaltz = springWaltz || {
     'mouseup' : 0.05,
     'mousehold' : 0.1,
   },
-  meltRandArr : [],
   now : 0,
   then : Date.now(),
   interval : 1000/30,   //frame late
   delta : 0,
+  meltRandArr : [],
+  meltRandNow : 0,
+  meltRandThen : Date.now(),
+  meltRandInterval : 1000,   //frame late
+  meltRandDelta : 0,
   barsArr1 : [],
   barsArr2 : [],
   barsArr3 : [],
@@ -120,7 +124,7 @@ var springWaltz = springWaltz || {
   initialize : function(){
     var that = this;
     that.initCanvas();
-    var maker = new voronoiMaker(60);
+    var maker = new voronoiMaker(30);
     var voronoiObj = maker.init(that.width, that.height);
     that.voronoiArr.push(voronoiObj);
     that.startAudio();
@@ -128,9 +132,9 @@ var springWaltz = springWaltz || {
     // that.initImage();
     that.initVideo();
 
-    var randNum = Math.floor((Math.random() * 50) - 10);
-    var randNum = 300;
     var samplesLength = voronoiObj.samples.length;
+    var randNum = Math.floor((Math.random() * 50) - 10);
+    var randNum = samplesLength/60;
     for(var i = 0; i < randNum; i++){
       that.meltRandArr.push( Math.floor((Math.random() * samplesLength)));
     };
@@ -439,14 +443,29 @@ var springWaltz = springWaltz || {
     }
   },
   meltRandom : function(){
-    var samples = this.voronoiArr[0].samples;
-    this.meltRandArr.forEach(function(m, i){
-      if(typeof samples[m].melting === 'undefined'){
-        samples[m].melting = Math.random() - 0.5;
-      }else{
-        samples[m].melting += 0.05;
-      }
-    });
+
+    var that = this;
+    var samples = that.voronoiArr[0].samples;
+    that.meltRandNow = Date.now();
+    that.meltRandDelta = that.meltRandNow - that.meltRandThen;
+    // console.log('meltRandom');
+    // console.log('that.meltRandDelta : ' + that.meltRandDelta);
+    // console.log('that.meltRandInterval : ' + that.meltRandInterval);
+    that.meltRandInterval = Math.floor((Math.random() * 10000) + 5000);
+    if (that.meltRandDelta > that.meltRandInterval) {
+      console.log('MELTING RANDOM!!!');
+      that.meltRandThen = that.meltRandNow - (that.meltRandDelta % that.meltRandInterval);
+      that.meltRandArr.forEach(function(m, i){
+      that.diagramFind('mousemove', samples[m][0],samples[m][1], 50);
+        // if(typeof samples[m].melting === 'undefined'){
+        //   samples[m].melting = Math.random() - 0.5;
+        // }else{
+        //   samples[m].melting += 0.05;
+        // }
+      });
+    }
+
+    
   },
   drawCircles : function(x,y,type){
     var that = this;
@@ -845,7 +864,7 @@ var springWaltz = springWaltz || {
   startVoronoi : function(){
     // console.log('startVoronoi');
     this.startEqulizer();
-    // this.meltRandom();
+    this.meltRandom();
     // this.drawCircles();
 
     
@@ -873,7 +892,14 @@ var springWaltz = springWaltz || {
         samples[i].melting = 0.9;
       };
       
-      polygons[i].melting = that.mouseStrength[type];
+      
+
+      if(type === 'meltrandom'){
+        polygons[i].melting = Math.random() * 0.01;
+      }else{
+        polygons[i].melting = that.mouseStrength[type];
+      };
+      
       cell.halfedges.forEach(function(e) {
         var edge = diagram.edges[e];
         var ea = edge.left;
