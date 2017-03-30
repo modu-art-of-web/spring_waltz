@@ -88,6 +88,7 @@ var springWaltz = springWaltz || {
   rythmX : 0,
   rythmY : 0,
   sinAngle : 0,
+  sinHeight : 0,
   initialize : function(){
     var that = this;
     that.initCanvas();
@@ -242,7 +243,7 @@ var springWaltz = springWaltz || {
   startEqulizer : function(){
     var that = this;
     var context = that.context;
-    var samples = that.voronoiArr[0].samples;
+    var samples = that.voronoiArr[1].samples;
     var height = that.height;
     var width = that.width;
     var bars4 = that.barsArr4;
@@ -263,13 +264,20 @@ var springWaltz = springWaltz || {
     if(that.sinAngle* 10 > width){
       that.sinAngle = 0;
     };
+    that.sinHeight += (height /that.sinAngle)*10;
+    if(that.sinHeight > height){
+      that.sinHeight = 0;
+    }
     that.sinAngle++;
     samples.push([
       that.sinAngle * 10
-      ,100 + Math.sin(that.sinAngle) * 10
+      , that.sinHeight + Math.sin(that.sinAngle) * 10
     ]);
-    samples[samples.length - 1].melting = 0.9;
+    samples[samples.length - 1].melting = 0.1;
     samples[samples.length - 1].musics = true;
+
+    // samples[0][0] += that.sinAngle; 
+    // samples[0][1] += that.sinAngle; 
   },
   startAnimation : function(){
     window.requestAnimationFrame(this.startAnimation.bind(this));
