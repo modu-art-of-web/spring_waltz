@@ -20,7 +20,6 @@ function voronoiMaker(sampleRadius){
       samples.push([0, dotsH*i]);
       samples.push([width, dotsH*i]);
     };
-    // Math.floor(Math.random() * (width - min + 1)) + min
   };
   function dsq(a,b) {
       var dx = a[0]-b[0], dy = a[1]-b[1];
@@ -36,24 +35,7 @@ function voronoiMaker(sampleRadius){
     var evalArr = [];
     vertices = [[162, 332], [182, 299], [141, 292], [158, 264], [141, 408], [160, 400], [177, 430], [151, 442], [155, 425], [134, 430], [126, 447], [139, 466], [160, 471], [167, 447], [182, 466], [192, 442], [187, 413], [173, 403], [168, 425], [153, 413], [179, 275], [163, 292], [134, 270], [143, 315], [177, 320], [163, 311], [162, 281], [182, 255], [141, 226], [156, 235], [173, 207], [187, 230], [204, 194], [165, 189], [145, 201], [158, 167], [190, 165], [206, 145], [179, 153], [204, 114], [221, 138], [243, 112], [248, 139], [177, 122], [179, 99], [196, 82], [219, 90], [240, 75], [218, 61], [228, 53], [211, 34], [197, 51], [179, 65], [155, 70], [165, 85], [134, 80], [124, 58], [153, 44], [173, 34], [192, 27], [156, 19], [119, 32], [128, 17], [138, 36], [100, 58], [112, 73], [100, 92], [78, 100], [83, 78], [61, 63], [80, 44], [100, 26], [60, 39], [43, 71], [34, 54], [32, 90], [53, 104], [60, 82], [66, 99], [247, 94], [187, 180], [221, 168]];
     vertices = [];
-    // polygons = voronoi(offset(samples,200,200)).polygons().filter(function(t, i) {
-    //     // console.log(t);
-    //     // console.log(i);
-    //     var evaluated = dsq(t[0],t[1]) < asq && dsq(t[0],t[2]) < asq && dsq(t[1],t[2]) < asq;
-    //     if(!evaluated){
-    //       evalArr.push(i);
-    //     }
-    //     return evaluated;
-    // });
-    // triangles = voronoi(offset(vertices,0,0)).triangles().filter(function(t, i) {
-    //     // console.log(t);
-    //     // console.log(i);
-    //     var evaluated = dsq(t[0],t[1]) < asq && dsq(t[0],t[2]) < asq && dsq(t[1],t[2]) < asq;
-    //     if(!evaluated){
-    //       evalArr.push(i);
-    //     }
-    //     return evaluated;
-    // });
+
     evalArr.reverse().forEach(function(e){
       vertices.splice(e, 1);
     });
@@ -146,11 +128,6 @@ var springWaltz = springWaltz || {
     that.backImgae = new Image;
     that.backImgae.src = that.backImgaeSrc;
     that.startAnimation();
-    // window.onload = function(){
-    //   that.backImgae = new Image;
-    //   that.backImgae.src = that.backImgaeSrc;
-    //   that.startAnimation();
-    // }
   },
   initVideo : function(){
     var that = this;
@@ -467,234 +444,6 @@ var springWaltz = springWaltz || {
 
     
   },
-  drawCircles : function(x,y,type){
-    var that = this;
-    var context = that.context;
-    var width = that.width;
-    var height = that.height;
-    var imageData = that.imageData;
-    var samples = that.voronoiArr[0].samples;
-    var polygons = that.voronoiArr[0].polygons;
-    var topology = spwUtils.computeTopology(that.voronoiArr[0].voronoi(samples));
-
-    // context.fillStyle = "rgba(0,0,0,0.5)";
-    // context.fillRect(0,0,width, height);
-    samples.forEach(function(p, i) {
-      context.beginPath();
-      // var melting =   Math.random() + 0.7;
-      var melting = 1;
-      if(typeof p.melting !== 'undefined'){
-        melting = (1 - p.melting);
-      };
-      // console.log('melting : ' + melting);
-      // var r = melting * 300;
-      context.arc(p[0], p[1], 30, 0, 2 * Math.PI);
-      context.fillStyle =  "rgba(255,255,255,"+melting+")";
-      context.fill();
-    });
-
-    // var context = this.context;
-    // var r = this.mouseStrength[type] * 300;
-    // context.beginPath();
-    // context.arc(x, y, r, 0, 2 * Math.PI);
-    // context.fillStyle =  "rgba(255,255,255,0.1)";
-    // context.fill();
-  },
-  drawInnerLine : function(){
-    var that = this;
-    var width = that.width;
-    var imageData = that.imageData;
-    var context = that.context;
-    var polygons = that.voronoiArr[0].polygons;
-    var samples = that.voronoiArr[0].samples;
-
-    // var polygonsClone = JSON.parse(JSON.stringify(polygons));
-    for (var i = 0; i < 25; ++i) {
-      polygons.forEach(function(cell, j) {
-        // if( j & 1) return;
-        var p0 = cell.shift(),
-            p1 = cell[0],
-            t = Math.min(0.001, 200 / that.getDistance(p0, p1));
-        if(typeof polygons[j].melting !== 'undefined'){
-          // console.log('polygons[j].melting : ' + polygons[j].melting);
-          t = Math.max(0.1, polygons[j].melting);
-          // delete polygons[j].melting;
-        }
-        var p2 = [p0[0] * (1 - t) + p1[0] * t, p0[1] * (1 - t) + p1[1] * t];
-        context.beginPath();
-        that.drawCell(cell);
-        cell.push(p2);
-        var rgba = spwUtils.squareSampleImage(imageData, p0[0], p0[1], 3, width);
-        rgba.opacity = Math.random();
-        context.strokeStyle =  rgba + "";
-        context.strokeStyle =  "rgba(255,255,255,"+t+")";
-        // context.strokeStyle =  'rgba(255,255,255,0.6)';
-        context.stroke();
-
-        // var rgba1 = spwUtils.squareSampleImage(imageData, p1[0], p1[1], 3, width);
-        // var rgba2 = spwUtils.squareSampleImage(imageData, p2[0], p2[1], 3, width);
-        // var randomOpa = Math.random()-0.7;
-        // rgba1.opacity = randomOpa;
-        // rgba2.opacity = randomOpa;
-        // var grd=context.createLinearGradient(p1[0],p1[1],p2[0],p2[1]);
-        // grd.addColorStop(0,rgba1 + "");
-        // grd.addColorStop(1,rgba2 + "");
-        // context.fillStyle=grd;
-        // context.fill();
-        // context.closePath();
-      });
-    }
-  },
-  drawTopology : function(){
-    var that = this;
-    var context = that.context;
-    var width = that.width;
-    var height = that.height;
-    var imageData = that.imageData;
-    var samples = that.voronoiArr[0].samples;
-    var polygons = that.voronoiArr[0].polygons;
-    var topology = spwUtils.computeTopology(that.voronoiArr[0].voronoi(samples));
-
-    
-    // var geo = topology.objects.voronoi.geometries;
-    // var geoMerge = topojson.merge(topology, geo.filter(function(d, i) { 
-    //   return i & 1; 
-    // }));
-    if(typeof that.geoMerge === 'undefined'){
-      that.geo = topology.objects.voronoi.geometries;
-      that.geoMerge = topojson.merge(topology, that.geo.filter(function(d, i) { 
-        // return i & 1; 
-        return i % 3;
-      }));;
-    };
-
-
-
-    // for (var k = 0; k < 30; ++k) {
-      // that.geoMerge.coordinates.forEach(function(polygon) {
-      //   var polLength = polygon.length;
-      //   polygon.forEach(function(ring, j) {
-      //       // console.log('ring : ' + JSON.stringify(ring));
-      //       // if( j & 1) return;
-      //       var p0 = ring.shift(),
-      //           p1 = ring[0],
-      //           t = Math.min(0.01, 4 / that.getDistance(p0, p1));
-      //       // if(typeof polygons[i].melting !== 'undefined'){
-      //       //   console.log('polygons[i].melting : ' + polygons[i].melting);
-      //       //   t = Math.max(0.1, polygons[i].melting);
-      //       //   delete polygons[i].melting;
-      //       //   context.beginPath();
-      //       //   that.drawCell(polygons[i]);
-      //       //   context.fillStyle="red";
-      //       //   context.fill();
-      //       // }
-      //       var p2 = [p0[0] * (1 - t) + p1[0] * t, p0[1] * (1 - t) + p1[1] * t  + 5 * polLength];
-      //       context.beginPath();
-      //       that.drawCell(ring);
-      //       ring.push(p2);
-      //       var rgba = spwUtils.squareSampleImage(imageData, p0[0], p0[1], 3, width);
-      //       rgba.opacity = 0.1;
-      //       // context.strokeStyle =  rgba + "";
-      //       // context.stroke();
-      //       context.fillStyle = 'rgba(255,255,255,0.5)';
-      //       context.fill();
-      //       context.closePath();
-      //     });
-      // });
-    // };
-
-
-    
-    that.geoMerge.coordinates.forEach(function(polygon) {
-      polygon.forEach(function(ring, i) {
-        context.beginPath();
-        spwUtils.renderSinglePolygon(context, ring, width, height);
-
-        // var rgba1 = spwUtils.squareSampleImage(imageData, p1[0], p1[1], 3, width);
-        // var rgba2 = spwUtils.squareSampleImage(imageData, p2[0], p2[1], 3, width);
-        var rgba1 = 'rgba(0,0,0,0.7)';
-        var rgba2 = 'rgba(0,0,0,0.3)';
-        var rgba3 = 'rgba(0,0,0,0)';
-        var rgba4 = 'rgba(255,255,255,0.1)';
-        var rgba5 = 'rgba(255,255,255,0.1)';
-        // var randomOpa = Math.random()-0.7;
-        // rgba1.opacity = randomOpa;
-        // rgba2.opacity = randomOpa;
-        // var grd=context.createLinearGradient(ring[0][0],ring[0][1],ring[0][0],ring[0][1]);
-        // var grd=context.createLinearGradient(0,0,width,height);
-        // grd.addColorStop(0,rgba1 + "");
-        // grd.addColorStop(0.3,rgba2 + "");
-        // grd.addColorStop(0.6,rgba3 + "");
-        // grd.addColorStop(0.98,rgba4 + "");
-        // grd.addColorStop(1,rgba5 + "");
-        // context.fillStyle=grd;
-        context.fillStyle = "rgba(255,255,255,0.7)";
-        context.fill();
-        context.lineWidth = 1.5;
-        context.lineJoin = "miter";
-        // context.strokeStyle = "rgba(255,0,0,1)";
-        context.strokeStyle = "rgba(255,255,255,1)";
-        context.stroke();
-        context.closePath();
-      })
-    });
-    
-    // context.beginPath();
-    // spwUtils.renderMultiPolygon(context, that.geoMerge, width, height);
-    // // context.fillStyle = "rgba(255,0,0,0.1)";
-    // context.fillStyle = "rgba(255,255,255,0.8)";
-    // context.fill();
-    // context.lineWidth = 1.5;
-    // context.lineJoin = "miter";
-    // // context.strokeStyle = "rgba(255,0,0,1)";
-    // context.strokeStyle = "rgba(255,255,255,1)";
-    // context.stroke();
-    // context.closePath();
-
-    //stoke of polygons
-    // context.beginPath();
-    // spwUtils.renderMultiLineString(context, topojson.mesh(topology, topology.objects.voronoi, function(a, b) { return a !== b; }));
-    // // context.strokeStyle = "rgba(0,0,0,0.4)";
-    // context.strokeStyle = "rgba(255,255,255,0.8)";
-    // context.lineWidth = 0.5;
-    // context.stroke();
-
-    //Sites
-    // samples.forEach(function(p, i) {
-    //   context.beginPath();
-    //   context.arc(p[0], p[1], 10, 0, 2 * Math.PI);
-    //   // context.fillStyle = i & 1 ? "rgba(255,0,0,1)" : "rgba(0,0,0,0.6)";
-    //   var x = Math.floor(samples[i][0]);
-    //   var y = Math.floor(samples[i][1]);
-    //   // context.fillStyle = pointSampleImage(imageData, x, y) + "";
-    //   // console.log(squareSampleImage(imageData, x, y, 3));
-    //   var rgba = spwUtils.squareSampleImage(imageData, x, y, 3, width);
-    //   if(typeof samples[i][2] !== 'undefined'){
-    //     rgba.opacity = samples[i][2];
-    //   }else{
-    //     rgba.opacity = 0.8;
-    //   };
-    //   context.fillStyle =  rgba + "";
-    //   if(polygons[i].background !== 'undefined'){
-    //     context.fillStyle =  polygons[i].background;
-    //     delete polygons[i]['background'];
-    //   };
-    //   console.log('that.voronoiArr[0].diagram.find.found : ' + that.voronoiArr[0].diagram.find.found);
-    //   // context.fillStyle = i & 1 ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.6)";
-    //   context.fill();
-    // });
-  },
-  drawInnerCircle : function(){
-    var that = this;
-    var context = that.context;
-    var polygons = that.voronoiArr[0].polygons;
-    context.beginPath();
-    polygons.forEach(function(cell) { that.drawPolygonIncircle(cell, -2.5); });
-    context.strokeStyle = "#ddd";
-    context.fillStyle = "rgba(255,255,255,0.6)";
-    context.fill();
-    context.stroke();
-  },
   drawBasic : function(){
     var x, y = 0;
     var that = this;
@@ -864,13 +613,8 @@ var springWaltz = springWaltz || {
   startVoronoi : function(){
     // console.log('startVoronoi');
     this.startEqulizer();
-    this.meltRandom();
-    // this.drawCircles();
+    // this.meltRandom();
 
-    
-    // this.drawInnerCircle();
-    // this.drawInnerLine();
-    // this.drawTopology();
     this.drawBasic();
   },
   diagramFind : function(type, x, y, radius){
@@ -977,7 +721,6 @@ var springWaltz = springWaltz || {
 };
 
 window.onload = function(){
-  // var playButton = document.getElementById('play_spring_waltz');
   var playButton = d3.select('#play_spring_waltz');
   console.log('playButton : ' + playButton);
   
@@ -991,5 +734,4 @@ window.onload = function(){
   }else{
     springWaltz.initialize();
   }
-  
 };
