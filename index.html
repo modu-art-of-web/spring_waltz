@@ -24,7 +24,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        display: none;
+        /*display: none;*/
     }
     .start-wrap{
       position: absolute;
@@ -44,31 +44,22 @@
 </head>
 <body>
 <script type="text/javascript" src="js/audio.js"></script>
-<script type="text/javascript" src="js/spUtils.js?v=8"></script>
-<script type="text/javascript" src="js/spWaltz.js?v=8"></script>
-<!-- <div class="fullscreen-bg">
-    <video id="theVideo" loop muted autoplay class="fullscreen-bg__video">
-        <source src="video/big_buck_bunny.webm" type="video/webm">
-        <source src="resources/video.mp4" type="video/mp4">
-        <source src="video/big_buck_bunny.ogv" type="video/ogg">
-    </video>
-</div> -->
-<!-- <div class="fullscreen-bg">
-    <video id="theVideo" loop muted autoplay class="fullscreen-bg__video">
-        <source src="resources/sec5.mp4" type="video/mp4">
-    </video>
-</div> -->
-<div class="fullscreen-bg">
-    <video id="theVideo" loop muted autoplay poster="resources/it-was-all-yellow/SNAPSHOTS/it-was-all-yellow.jpg" class="fullscreen-bg__video">
+<script type="text/javascript" src="js/spUtils.js?v=7"></script>
+<script type="text/javascript" src="js/spWaltz.js?v=7"></script>
+<div id="sp_fullscreen_video" class="fullscreen-bg">
+    <video id="theVideo" loop muted poster="resources/it-was-all-yellow/SNAPSHOTS/it-was-all-yellow.jpg" class="fullscreen-bg__video">
         <source src="resources/it-was-all-yellow/WEBM/it-was-all-yellow.webm" type="video/webm">
         <source src="resources/it-was-all-yellow/MP4/it-was-all-yellow.mp4" type="video/mp4">
         <source src="resources/it-was-all-yellow/OGV/it-was-all-yellow.ogv" type="video/ogg">
     </video>
 </div>
 
-<div id="start_container" class="start-wrap">
+<!-- <div id="start_container" class="start-wrap">
   <button id="play_spring_waltz">PLAY</button>
-</div>
+</div> -->
 </body>
+<script>
+  window.onload = dreamSpring.init;
+</script>
 </html>
 
