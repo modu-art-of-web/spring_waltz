@@ -2,20 +2,9 @@
 Audio Visualizer by Raathigeshan.
 http://raathigesh.com/
 */
-function AudioVisualizer() {
+function AudioVisualizer(num = 60) {
     //constants
-    this.numberOfBars = 60;
-
-    //Rendering
-    // this.scene;
-    // this.camera;
-    // this.renderer;
-    // this.controls;
-
-    // //bars
-    // this.bars = new Array();
-
-    //audio
+    this.numberOfBars = num;
     this.javascriptNode;
     this.audioContext;
     this.sourceBuffer;
@@ -27,10 +16,9 @@ AudioVisualizer.prototype.setupAudioProcessing = function () {
     || window.webkitAudioContext // Safari and old versions of Chrome
     || false;
 
-    
     if(audioCtx){
         //get the audio context
-        this.audioContext = new audioCtx;
+        this.audioContext = new audioCtx();
         // this.audioContext = new AudioContext();
 
         //create the javascript node
@@ -54,45 +42,21 @@ AudioVisualizer.prototype.setupAudioProcessing = function () {
         //connect source to analyser
         this.sourceBuffer.connect(this.audioContext.destination);
 
-        var that = this;
-
-        //this is where we animates the bars
-        // this.javascriptNode.onaudioprocess = function () {
-
-        //     // get the average for the first channel
-        //     var array = new Uint8Array(that.analyser.frequencyBinCount);
-        //     that.analyser.getByteFrequencyData(array);
-
-        //     //render the scene and update controls
-        //     // audioVis.renderer.render(audioVis.scene, audioVis.camera);
-        //     // audioVis.controls.update();
-
-        //     var step = Math.round(array.length / audioVis.numberOfBars);
-
-        //     // console.log('step : ' + JSON.stringify(step));
-        //     // console.log('array : ' + JSON.stringify(array));
-
-        //     //Iterate through the bars and scale the z axis
-        //     for (var i = 0; i < audioVis.numberOfBars; i++) {
-        //         var value = array[i * step] / 4;
-        //         value = value < 1 ? 1 : value;
-        //         // console.log('value : ' + value);
-        //         // audioVis.bars[i].scale.z = value;
-        //     }
-        // }
+        return this.javascriptNode;
     }
     
 };
 //get the default audio from the server
-AudioVisualizer.prototype.getAudio = function () {
+AudioVisualizer.prototype.sendRequest = function (mp3) {
+    var that = this;
     var request = new XMLHttpRequest();
-    request.open("GET", "resources/audios/spring_waltz.mp3", true);
+    request.open("GET", mp3, true);
     request.responseType = "arraybuffer";
     request.send();
-    var that = this;
-    request.onload = function () {
-        that.start(request.response);
-    }
+    // request.onload = function () {
+    //   that.start(request.response);
+    // };
+    return request;
 };
 //start the audio processing
 AudioVisualizer.prototype.start = function (buffer) {
