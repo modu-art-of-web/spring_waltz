@@ -1,7 +1,7 @@
 var spwUtils = spwUtils || function() {
   return{
       // Based on https://www.jasondavies.com/poisson-disc/
-      poissonDiscSampler : function(width, height, radius) {
+      poissonDiscSampler : function(width, height, radius, playRadius = 0 ) {
         // width = width+ 500;
         // height = height+ 500;
         var k = 30, // maximum number of samples before rejection
@@ -13,7 +13,9 @@ var spwUtils = spwUtils || function() {
             grid = new Array(gridWidth * gridHeight),
             queue = [],
             queueSize = 0,
-            sampleSize = 0;
+            sampleSize = 0,
+            center = [width/2, height/2],
+            tryNum = 0;
         return function() {
           if (!sampleSize) return sample(Math.random() * width, Math.random() * height);
           // Pick a random existing sample and remove it from the queue.
@@ -54,8 +56,19 @@ var spwUtils = spwUtils || function() {
           }
           return true;
         }
+        function getDistance(a, b) {
+          var dx = a[0] - b[0], dy = a[1] - b[1];
+          return Math.sqrt(dx * dx + dy * dy);
+        }
         function sample(x, y) {
-          var s = [x, y, 0.7, 0, 0];
+          var s = [x, y];
+          if(tryNum > 10){
+            return;
+          }
+          if(getDistance(s, center) < playRadius*2){
+            tryNum++;
+            return sample(Math.random() * width, Math.random() * height);
+          };
           queue.push(s);
           grid[gridWidth * (y / cellSize | 0) + (x / cellSize | 0)] = s;
           ++sampleSize;
@@ -104,9 +117,7 @@ var spwUtils = spwUtils || function() {
                     cellIndex = index,
                     cellArcs = [],
                     clipArc;
-                    // console.log('cellIndex : ' + cellIndex);
                     // site.data.push(cellIndex);
-                    // console.log('cell : ' + JSON.stringify(cell));
                 halfedges.forEach(function(halfedge) {
                   var edge = diagram.edges[halfedge];
                   if (edge.right) {
@@ -152,6 +163,32 @@ var spwUtils = spwUtils || function() {
             else context.moveTo(point[0], point[1]);
           });
         });
+      },
+      getAverageColourAsRGB : function(data) {
+        var r = 0;
+        var g = 0;
+        var b = 0;
+
+        for (var i = 0, l = data.length; i < l; i += 4) {
+          r += data[i];
+          g += data[i+1];
+          b += data[i+2];
+        }
+
+        r = Math.floor(r / (data.length / 4));
+        g = Math.floor(g / (data.length / 4));
+        b = Math.floor(b / (data.length / 4));
+
+        return d3.rgb(r, g, b);
+        // return { r: r, g: g, b: b };
+      },
+      // dsq:function(a,b) {
+      //     var dx = a[0]-b[0], dy = a[1]-b[1];
+      //     return dx*dx+dy*dy;
+      // },
+      getDistance:function(a, b) {
+        var dx = a[0] - b[0], dy = a[1] - b[1];
+        return Math.sqrt(dx * dx + dy * dy);
       },
       getCenterAll : function(cenArr){
         var sum = [0,0];
