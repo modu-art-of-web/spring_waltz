@@ -3,6 +3,38 @@
 //     return true;
 // }
 
+(function() {
+    var c = "undefined" !== typeof module && module.exports,
+        a = "undefined" !== typeof Element && "ALLOW_KEYBOARD_INPUT" in Element,
+        b = function() {
+            var a, b, c = ["requestFullscreen exitFullscreen fullscreenElement fullscreenEnabled fullscreenchange fullscreenerror".split(" "), "webkitRequestFullscreen webkitExitFullscreen webkitFullscreenElement webkitFullscreenEnabled webkitfullscreenchange webkitfullscreenerror".split(" "), "webkitRequestFullScreen webkitCancelFullScreen webkitCurrentFullScreenElement webkitCancelFullScreen webkitfullscreenchange webkitfullscreenerror".split(" "),
+                    "mozRequestFullScreen mozCancelFullScreen mozFullScreenElement mozFullScreenEnabled mozfullscreenchange mozfullscreenerror".split(" "), "msRequestFullscreen msExitFullscreen msFullscreenElement msFullscreenEnabled MSFullscreenChange MSFullscreenError".split(" ")
+                ],
+                d = 0;
+            b = c.length;
+            for (var m = {}; d < b; d++)
+                if ((a = c[d]) && a[1] in document) { d = 0;
+                    for (b = a.length; d < b; d++) m[c[0][d]] = a[d];
+                    return m }
+            return !1
+        }(),
+        d = {
+            request: function(c) {
+                var d = b.requestFullscreen;
+                c = c || document.documentElement;
+                if (/5\.1[\.\d]* Safari/.test(navigator.userAgent)) c[d]();
+                else c[d](a && Element.ALLOW_KEYBOARD_INPUT)
+            },
+            exit: function() { document[b.exitFullscreen]() },
+            toggle: function(a) { this.isFullscreen ? this.exit() : this.request(a) },
+            raw: b
+        };
+    b ? (Object.defineProperties(d, { isFullscreen: { get: function() {
+                return Boolean(document[b.fullscreenElement]) } }, element: { enumerable: !0, get: function() {
+                return document[b.fullscreenElement] } }, enabled: { enumerable: !0, get: function() {
+                return Boolean(document[b.fullscreenEnabled]) } } }), c ? module.exports = d : window.screenfull = d) : c ? module.exports = !1 : window.screenfull = !1
+})();
+
 var spwDraw = spwDraw || {
   context : [],
   drawImageProp : function(ctx, img, x, y, w, h, offsetX, offsetY) {
@@ -290,6 +322,14 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
       _curMouseEvent = 'mousemove',
       _averageMeting = 0;
 
+      _iconW = _iconH = 50;
+      _fbImg = new Image;
+      _fbImg.src = 'resources/imgs/fb.png';
+      _twImg = new Image;
+      _twImg.src = 'resources/imgs/tw.png';
+      _replayImg = new Image;
+      _replayImg.src = 'resources/imgs/replay.png';
+   
   function setup(){
 
   }
@@ -359,8 +399,8 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
         // }
       }else{
         
-        console.log('_audioVis.audioContext.currentTime : ' + _audioVis.audioContext.currentTime);
-        console.log('_audioVis.sourceBuffer.buffer.duration : ' + _audioVis.sourceBuffer.buffer.duration);
+        // console.log('_audioVis.audioContext.currentTime : ' + _audioVis.audioContext.currentTime);
+        // console.log('_audioVis.sourceBuffer.buffer.duration : ' + _audioVis.sourceBuffer.buffer.duration);
         if(_audioVis.audioContext.currentTime > _audioVis.sourceBuffer.buffer.duration ){
           if(_stageStatus !== STAGE_ENDING){
             spwVo.resample('random');
@@ -449,7 +489,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
     }
    
 
-    // // 사이트
+    // 사이트
     // spwVo.samples.forEach(function(s, i){
     //   _context.beginPath();
     //   spwDraw.drawSite(s);
@@ -460,7 +500,11 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
     //     _context.fillStyle = "red";
     //     _context.strokeStyle = "white";
     //   }
-      
+    //   _context.font = "15px Julius Sans One,sans-serif, Arial";
+    //   _context.fillStyle = 'red';
+    //   _context.textAlign = 'center';
+    //   _context.fillText(i,s[0],s[1]);
+
     //   _context.fill();
     //   _context.stroke();
     //   _context.closePath();
@@ -476,9 +520,30 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
   }
   function drawEnding(){
 
+    
+
+    var topology = spwUtils.computeTopology(spwVo.voronoi(spwVo.samples));
+    var geo = topology.objects.voronoi.geometries;
+    var limitX = _width * 0.1;
+    var limitY = _height * 0.25;
+    var nextPolygons = [];
+    var geoMerge = topojson.merge(topology, geo.filter(function(d, i) { 
+      var x = d.data[0];
+      var y = d.data[1];
+      var endingBox = ( x > limitX && x < (_width - limitX) && y > limitY && y < (_height - limitY));
+      if(!endingBox){
+          nextPolygons.push([d.cellIndex, spwUtils.getDistance([_width/2,_height/2], [x,y])]);
+      };
+      return endingBox;
+    }));
+
+    nextPolygons.sort(function(a, b) {
+        return a[1] - b[1];
+    });
+
     //polygones
     spwVo.polygons.forEach(function(p, i){
-      _context.beginPath();
+      
       if(typeof p === 'undefined' || typeof p.data === 'undefined' ){
       
       }else{
@@ -486,24 +551,46 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
         y = Math.floor(p.data[1]);
       }
 
+      _context.beginPath();
       var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
       rgba.opacity = 0.6;
-
       _context.fillStyle =  rgba + "";
       spwDraw.drawCell(p);
       _context.fill();
       _context.closePath();
+
+      
+      if(nextPolygons[0][0] === i){
+        // _context.fillStyle =  "red";
+        var pos = spwVo.samples[i];
+        _context.drawImage(_fbImg, pos[0] - _iconW/2, pos[1] - _iconH/2, _iconW, _iconH);
+      }else if(nextPolygons[10][0] === i){
+        var pos = spwVo.samples[i];
+        _context.drawImage(_twImg, pos[0] - _iconW/2, pos[1] - _iconH/2, _iconW, _iconH);
+      }
+      
     });
 
-    var topology = spwUtils.computeTopology(spwVo.voronoi(spwVo.samples));
-    var geo = topology.objects.voronoi.geometries;
-    var geoMerge = topojson.merge(topology, geo.filter(function(d, i) { 
-      var x = d.data[0];
-      var y = d.data[1];
-      var limitX = _width * 0.1;
-      var limitY = _height * 0.25;
-      return ( x > limitX && x < (_width - limitX) && y > limitY && y < (_height - limitY) )
-    }));
+    // spwVo.samples.forEach(function(s, i){
+    //   _context.beginPath();
+    //   spwDraw.drawSite(s);
+    //   if(typeof s.playbtn === 'undefined'){
+    //     _context.fillStyle = "black";
+    //     _context.strokeStyle = "yellow";
+    //   }else{
+    //     _context.fillStyle = "red";
+    //     _context.strokeStyle = "white";
+    //   }
+    //   // _context.font = "15px Julius Sans One,sans-serif, Arial";
+    //   // _context.fillStyle = 'red';
+    //   // _context.textAlign = 'center';
+    //   // _context.fillText(i,s[0],s[1]);
+
+    //   _context.fill();
+    //   _context.stroke();
+    //   _context.closePath();
+    // });
+
     geoMerge.coordinates.forEach(function(polygon) {
       polygon.forEach(function(ring, i) {
         _context.beginPath();
@@ -527,6 +614,8 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
 
         _context.font = "16px Julius Sans One,sans-serif, Arial";
         _context.fillText('by Taejae Han',_width/2,_height/2 + 25);
+
+        // _context.drawImage(_replayImg, _width/2 - _iconW, _height/2 + 50, _iconW, _iconH);
       })
     });
     _stageStatus = STAGE_ENDING;
@@ -572,7 +661,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
     },_freezeTime);
   }
   function isPlayBtnPos(pos){
-    return spwUtils.getDistance([_width/2,_height/2], pos) < _playBtnRadius/2 ;
+    return spwUtils.getDistance([_width/2,_height/2], pos) < _playBtnRadius/2;
   }
   // function startMelt(){
 
@@ -773,6 +862,7 @@ var dreamSpring = dreamSpring || new function(){
     _springWaltz.userEvent('mouseup', d3.mouse(this));
   };
   function mousemoved() {
+    d3.event.preventDefault();
     var type = 'mousemove';
     if(_mouseholding){
       type = 'mousehold';
