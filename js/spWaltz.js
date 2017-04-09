@@ -267,6 +267,7 @@ var spwVoronoi = function(w, h, sampleType, playBtnRadius = 0){
 var springWaltz = springWaltz || function(w, h, ctx, back, audio){
 
   var spwVo,
+      _spUrl = 'http://springwaltz.taejaehan.com',
       _width = w,
       _height = h,
       _canvasCen = [w/2, h/2],
@@ -300,16 +301,16 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
       _audioData = [],
       _curMouse = [],
       _curMouseEvent = 'mousemove',
-      _averageMeting = 0;
+      _averageMeting = 0,
+      _iconW = _iconH = _width/10 > 40 ? 40 : _width/10,
+      _snsImg = new Image,
+      _snsImg.src = 'resources/imgs/sns.png',
+      _fbPos = [ _width - _iconW * 1.5, 10],
+      _twPos = [ _width - _iconW * 2.8, 10],
+      _fbPosCen = [ (_fbPos[0] + _iconW/2), (_fbPos[1] + _iconH/2)],
+      _twPosCen = [ (_twPos[0] + _iconW/2), (_twPos[1] + _iconH/2)];
+      _authorLinkSize = [110 , 30];
 
-      _iconW = _iconH = 30;
-      _fbImg = new Image;
-      _fbImg.src = 'resources/imgs/fb.png';
-      _twImg = new Image;
-      _twImg.src = 'resources/imgs/tw.png';
-      _replayImg = new Image;
-      _replayImg.src = 'resources/imgs/replay.png';
-   
   function setup(){
 
   }
@@ -401,7 +402,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
         _fThen = _fNow - (_fDelta % _fInterval);
         if(_stageStatus === STAGE_PLAYING){
           _diagFind = spwVo.meltAtPos(_curMouse[0],_curMouse[1],50,_meltRatio['mousemove']);
-          audioUpdate();
+          // audioUpdate();
         };
         draw();
       }
@@ -443,7 +444,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
     var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
     rgba.opacity = 1;
     _context.fillStyle = rgba + "";
-    _context.strokeStyle =  "rgba(255,255,255,1)";
+    _context.strokeStyle =  "rgba(255,255,255,0.3)";
     spwDraw.drawCell(spwVo.triangles[spwVo.triPlayIndex]);
     _context.stroke();
     _context.fill();
@@ -655,15 +656,16 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
       _context.fill();
       _context.closePath();
 
-      _context.drawImage(_fbImg, _width - _iconW * 1.5, 10, _iconW, _iconH);
-      _context.drawImage(_twImg, _width - _iconW * 2.5, 10, _iconW, _iconH);
+      
+      // _context.drawImage(_snsImg, -5,0,90,100, _fbPos[0], _fbPos[1], _iconW, _iconH);
+      // _context.drawImage(_snsImg, 95,0,90,100, _twPos[0], _twPos[1], _iconW, _iconH);
       // if(nextPolygons[0][0] === i){
       //   // _context.fillStyle =  "red";
       //   var pos = spwVo.samples[i];
-      //   _context.drawImage(_fbImg, pos[0] - _iconW/2, pos[1] - _iconH/2, _iconW, _iconH);
+      //   _context.drawImage(_snsImg, pos[0] - _iconW/2, pos[1] - _iconH/2, _iconW, _iconH);
       // }else if(nextPolygons[10][0] === i){
       //   var pos = spwVo.samples[i];
-      //   _context.drawImage(_twImg, pos[0] - _iconW/2, pos[1] - _iconH/2, _iconW, _iconH);
+      //   _context.drawImage(_snsImg, pos[0] - _iconW/2, pos[1] - _iconH/2, _iconW, _iconH);
       // }
       
     });
@@ -710,7 +712,14 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
         // _context.fillText('- Johann Strauss Jr.',_width/2,_height/2 + 23);
 
         _context.font = "16px Julius Sans One,sans-serif, Arial";
+        _context.beginPath();
         _context.fillText('by Taejae Han',_width/2,_height/2 + 25);
+        _context.moveTo(_width/2 - _authorLinkSize[0]/2 ,_height/2+ _authorLinkSize[1]);
+        _context.lineTo(_width/2 + _authorLinkSize[0]/2,_height/2+ _authorLinkSize[1]);
+        _context.lineWidth = 1;
+        _context.strokeStyle = avrRgb + '';
+        _context.stroke();
+        _context.closePath();
 
         // _context.drawImage(_replayImg, _width/2 - _iconW, _height/2 + 50, _iconW, _iconH);
       })
@@ -774,9 +783,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
 
 
   }
-  function isPlayBtnPos(pos){
-    return spwUtils.getDistance([_width/2,_height/2], pos) < _playBtnRadius/2;
-  }
+  
   // function startMelt(){
 
   // }
@@ -838,7 +845,10 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
   function resize(w,h){
     _width = w;
     _height = h;
-    _canvasCen = [(w/2),(h/2)];
+    _canvasCen = [(_width/2),(_height/2)];
+    _iconW = _iconH = _width/10 > 40 ? 40 : _width/10;
+    _fbPos = [ _width - _iconW * 1.5, 10];
+    _twPos = [ _width - _iconW * 2.8, 10];
     _imageData = _context.getImageData(0, 0, _width, _height);
     var type = 'poisson';
     if(_stageStatus === STAGE_ENDING){
@@ -847,13 +857,33 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
     spwVo = new spwVoronoi(_width, _height, type, _playBtnRadius);
   };
 
+  function isPlayBtnPos(pos){
+    return spwUtils.getDistance([_width/2,_height/2], pos) < _playBtnRadius/2;
+  }
+  function isShareFbPos(pos){
+    return spwUtils.getDistance([_fbPos[0]+_iconW/2, _fbPos[1]+_iconW/2], pos) < _iconW/2;
+  }
+  function isShareTwPos(pos){
+    return spwUtils.getDistance([_twPos[0]+_iconW/2, _twPos[1]+_iconW/2], pos) < _iconW/2;
+  }
+  function isAuthorPos(pos){
+    return ((pos[0] > _width/2 - _authorLinkSize[0]/2) && (pos[0] < _width/2 + _authorLinkSize[0]/2) && pos[1] > _height/2 + 9 && pos[1] < _height/2 + _authorLinkSize[1]);
+  }
   function userEvent(type, m){
     if(_stageStatus === STAGE_PLAYING){
       _curMouseEvent = type;
       _diagFind = spwVo.meltAtPos(m[0],m[1],50,_meltRatio[type]);
     }else if(_stageStatus === STAGE_READY && type === 'mouseup' && isPlayBtnPos(m)){
       startAudio();
-    };
+    }else if(_stageStatus === STAGE_ENDING && type === 'mouseup'){
+      if(isShareFbPos(m)){
+        window.open('http://www.facebook.com/sharer/sharer.php?u='+_spUrl);
+      }else if(isShareTwPos(m)){
+        window.open("https://twitter.com/share?url="+encodeURIComponent(_spUrl)+"&text="+document.title);
+      }else if(isAuthorPos(m)){
+        window.open("http://blog.taejaehan.com");
+      }
+    }
     _curMouse = m;
   }
   function init(){
@@ -893,10 +923,11 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
 var dreamSpring = dreamSpring || new function(){
 
   var _isSupport = true,
-      _isMobile = _checkMobile,
+      // _isMobile = _checkMobile,
+      _isMobile = true,
       _mouseholding = true,
-      _imgNum = 4,
-      _imgPath = 'resources/imgs/sp'+Math.floor(Math.random()* _imgNum + 1) +'.jpg',
+      _imgNum = 12,
+      _imgPath = 'resources/imgs/spw'+Math.floor(Math.random()* _imgNum + 1) +'.jpg',
       _mouseTimeOut,
       _springWaltz,
       _canvas, 
