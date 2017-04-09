@@ -402,7 +402,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
         _fThen = _fNow - (_fDelta % _fInterval);
         if(_stageStatus === STAGE_PLAYING){
           _diagFind = spwVo.meltAtPos(_curMouse[0],_curMouse[1],50,_meltRatio['mousemove']);
-          // audioUpdate();
+          audioUpdate();
         };
         draw();
       }
@@ -444,7 +444,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
     var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
     rgba.opacity = 1;
     _context.fillStyle = rgba + "";
-    _context.strokeStyle =  "rgba(255,255,255,0.3)";
+    _context.strokeStyle =  "rgba(255,255,255,0.8)";
     spwDraw.drawCell(spwVo.triangles[spwVo.triPlayIndex]);
     _context.stroke();
     _context.fill();
@@ -512,7 +512,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
         })).triangles();
       }
       
-      if(_averageMeting < 0.25){
+      if(_averageMeting < 0.85){
 
         // spwVo.polygons.forEach(function(p, i){
         //   _context.beginPath();
@@ -657,8 +657,8 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
       _context.closePath();
 
       
-      // _context.drawImage(_snsImg, -5,0,90,100, _fbPos[0], _fbPos[1], _iconW, _iconH);
-      // _context.drawImage(_snsImg, 95,0,90,100, _twPos[0], _twPos[1], _iconW, _iconH);
+      _context.drawImage(_snsImg, -5,0,90,100, _fbPos[0], _fbPos[1], _iconW, _iconH);
+      _context.drawImage(_snsImg, 95,0,90,100, _twPos[0], _twPos[1], _iconW, _iconH);
       // if(nextPolygons[0][0] === i){
       //   // _context.fillStyle =  "red";
       //   var pos = spwVo.samples[i];
