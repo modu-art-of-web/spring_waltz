@@ -1097,6 +1097,7 @@ var dreamSpring = dreamSpring || new function(){
   
   _this.init = function(){
     if(_isSupport){
+      
       initCanvas();
       window.onresize = windowResize;
     }else{
