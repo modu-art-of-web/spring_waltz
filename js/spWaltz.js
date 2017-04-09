@@ -3,37 +3,6 @@
 //     return true;
 // }
 
-(function() {
-    var c = "undefined" !== typeof module && module.exports,
-        a = "undefined" !== typeof Element && "ALLOW_KEYBOARD_INPUT" in Element,
-        b = function() {
-            var a, b, c = ["requestFullscreen exitFullscreen fullscreenElement fullscreenEnabled fullscreenchange fullscreenerror".split(" "), "webkitRequestFullscreen webkitExitFullscreen webkitFullscreenElement webkitFullscreenEnabled webkitfullscreenchange webkitfullscreenerror".split(" "), "webkitRequestFullScreen webkitCancelFullScreen webkitCurrentFullScreenElement webkitCancelFullScreen webkitfullscreenchange webkitfullscreenerror".split(" "),
-                    "mozRequestFullScreen mozCancelFullScreen mozFullScreenElement mozFullScreenEnabled mozfullscreenchange mozfullscreenerror".split(" "), "msRequestFullscreen msExitFullscreen msFullscreenElement msFullscreenEnabled MSFullscreenChange MSFullscreenError".split(" ")
-                ],
-                d = 0;
-            b = c.length;
-            for (var m = {}; d < b; d++)
-                if ((a = c[d]) && a[1] in document) { d = 0;
-                    for (b = a.length; d < b; d++) m[c[0][d]] = a[d];
-                    return m }
-            return !1
-        }(),
-        d = {
-            request: function(c) {
-                var d = b.requestFullscreen;
-                c = c || document.documentElement;
-                if (/5\.1[\.\d]* Safari/.test(navigator.userAgent)) c[d]();
-                else c[d](a && Element.ALLOW_KEYBOARD_INPUT)
-            },
-            exit: function() { document[b.exitFullscreen]() },
-            toggle: function(a) { this.isFullscreen ? this.exit() : this.request(a) },
-            raw: b
-        };
-    b ? (Object.defineProperties(d, { isFullscreen: { get: function() {
-                return Boolean(document[b.fullscreenElement]) } }, element: { enumerable: !0, get: function() {
-                return document[b.fullscreenElement] } }, enabled: { enumerable: !0, get: function() {
-                return Boolean(document[b.fullscreenEnabled]) } } }), c ? module.exports = d : window.screenfull = d) : c ? module.exports = !1 : window.screenfull = !1
-})();
 
 var spwDraw = spwDraw || {
   context : [],
@@ -292,10 +261,13 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
   var spwVo,
       _width = w,
       _height = h,
+      _canvasCen = [w/2, h/2],
       _backRes = back,
       _audioVis = audio,
+      _analyser = '',
       _context = ctx,
       _imageData = _context.getImageData(0, 0, _width, _height),
+      _loadAngle = 0;
       STAGE_INIT = 0,
       STAGE_READY = 1,
       STAGE_FREEZE = 2,
@@ -308,7 +280,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
       _fps = 60,                  /* 60 ms */
       _fInterval = (1000/_fps),   //frame rate
       _fDelta = 0,
-      _freezeTime = 5000,
+      _freezeTime = 4000,
       _freezeRatio = 1 / (_fps * (_freezeTime / 1000)),
       _meltRatio = {
         'mousemove' : 0.01,
@@ -333,6 +305,84 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
   function setup(){
 
   }
+  // function audioUpdate(){
+  //   var perAngle = 360 / _audioData.length;
+  //   _audioData.forEach(function(b, i){
+  //       spwVo.samples.push([
+  //         _curMouse[0] + Math.sin(perAngle*i) * (b*5)
+  //         ,_curMouse[1] + Math.cos(perAngle*i) * (b*5)
+  //       ]);
+  //       var mel = 0.5;
+  //       if(_curMouseEvent === 'mousehold'){
+  //         mel = 0.8;
+  //       }
+  //       spwVo.samples[spwVo.samples.length - 1].melting = mel;
+  //       spwVo.samples[spwVo.samples.length - 1].musics = true;
+  //   });
+  // }
+  function audioUpdate(){
+    var uintFrequencyData = new Uint8Array(_analyser.frequencyBinCount);
+    // var timeFrequencyData = new Uint8Array(_analyser.fftSize);
+    // app.animationFrame = (window.requestAnimationFrame || window.webkitRequestAnimationFrame)(app.animate);
+    // stats.begin();
+    var array = _analyser.getByteFrequencyData(uintFrequencyData);
+    // _analyser.getByteTimeDomainData(timeFrequencyData);
+    var step = Math.round(uintFrequencyData.length / 60);
+    var perAngle = 360 / step;
+    for (var i = 0; i <= 60; i++){
+      var value = uintFrequencyData[i * step] / 4;
+      // console.log('value : ' + value);
+      // particle = particles[i++];
+      // particle.position.y = (uintFrequencyData[i] + 80);
+      // particle.material.color.setRGB(1,1 - uintFrequencyData[i]/255,1);
+
+      particle = spwVo.samples[i++];
+      particle[0] = _curMouse[0] + Math.sin(perAngle*i) * (value*5);
+      particle[1] = _curMouse[1] + Math.cos(perAngle*i) * (value*5);
+      var mel = 0.5;
+      if(_curMouseEvent === 'mousehold'){
+        mel = 0.8;
+      }
+      particle.melting = mel;
+      // particle.musics = true;
+    }
+    
+    // _audioData.forEach(function(b, i){
+    //     spwVo.samples.push([
+    //       _curMouse[0] + Math.sin(perAngle*i) * (b*5)
+    //       ,_curMouse[1] + Math.cos(perAngle*i) * (b*5)
+    //     ]);
+    //     var mel = 0.5;
+    //     if(_curMouseEvent === 'mousehold'){
+    //       mel = 0.8;
+    //     }
+    //     spwVo.samples[spwVo.samples.length - 1].melting = mel;
+    //     spwVo.samples[spwVo.samples.length - 1].musics = true;
+    // });
+    // for (var j = 0; j <= 2048; j++){
+    //   console.log('timeFrequencyData[j] : ' + timeFrequencyData[j]);
+    //     // particle2 = particles2[j++];
+    //     // particle2.position.y = (timeFrequencyData[j]/1.5 - 85);
+    //     // particle2.material.color.setRGB(1,1 - timeFrequencyData[j]/375,1);
+    // }
+    // for (var k = 0; k <= 1024; k++){
+    //   console.log('uintFrequencyData[k] : ' + uintFrequencyData[k]);
+    //     // particle3 = particles3[k++];
+    //     // particle3.position.y = -(uintFrequencyData[k] + 80);
+    //     // particle3.material.color.setRGB(1,1 - (uintFrequencyData[k]/255),1);
+    // }
+    // _audioVis.node.onaudioprocess = function () {
+    //     var array = new Uint8Array(_audioVis.analyser.frequencyBinCount);
+    //     _audioVis.analyser.getByteFrequencyData(array);
+    //     var step = Math.round(array.length / _audioVis.numberOfBars);
+
+    //     //Iterate through the bars and scale the z axis
+    //     for (var i = 0; i < _audioVis.numberOfBars; i++) {
+    //         var value = array[i * step] / 4;
+    //         _audioData[i] = value;
+    //     }
+    // }
+  }
   function update(){
     window.requestAnimationFrame(update);
     
@@ -342,45 +392,79 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
       if(_backRes.currentTime !== 0){
         _fThen = _fNow - (_fDelta % _fInterval);
         if(_stageStatus === STAGE_PLAYING){
-          audioUpdate();
           _diagFind = spwVo.meltAtPos(_curMouse[0],_curMouse[1],50,_meltRatio['mousemove']);
+          audioUpdate();
         };
         draw();
       }
     };
   };
+
+  function drawLoading(){
+    _context.beginPath();
+    _context.fillStyle =  "red";
+    _context.lineWidth = 3;
+    spwDraw.drawCell(spwVo.triangles[spwVo.triPlayIndex]);
+    _context.stroke();
+    _context.fill();
+    _context.closePath();
+
+    _context.beginPath();
+    _context.arc(_canvasCen[0] - (_playBtnRadius/2), _canvasCen[1], 20, 0, 2 * Math.PI, false);
+    _context.strokeStyle =  "rgba(255,255,255,1)";
+    _context.stroke();
+    _context.closePath();
+
+    _context.beginPath();
+    _loadAngle += 0.05;
+    _context.arc(_canvasCen[0] - (_playBtnRadius/2) + Math.sin(_loadAngle) * 20, _canvasCen[1] + Math.cos(_loadAngle) * 20, 2.5, 0, 2 * Math.PI, false);
+    _context.fillStyle =  "blue";
+    _context.fill();
+    _context.closePath();
+  }
+  function drawReady(){
+
+    _context.beginPath();
+    var cen = spwUtils.getCenterAll(spwVo.triangles[spwVo.triPlayIndex]);
+    var x = Math.floor(cen[0]);
+    var y = Math.floor(cen[1]);
+    var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
+    rgba.opacity = 1;
+    _context.fillStyle = rgba + "";
+    _context.strokeStyle =  "rgba(255,255,255,1)";
+    spwDraw.drawCell(spwVo.triangles[spwVo.triPlayIndex]);
+    _context.stroke();
+    _context.fill();
+    _context.closePath();
+
+    // spwVo.triangles.forEach(function(t, i){
+    //   _context.beginPath();
+    //   var cen = spwUtils.getCenterAll(t);
+    //   var x = Math.floor(cen[0]);
+    //   var y = Math.floor(cen[1]);
+    //   var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
+    //   rgba.opacity = 0.6;
+    //   _context.fillStyle = rgba + "";
+    //   if(i === spwVo.triPlayIndex){
+    //     rgba.opacity = 0.9;
+    //     _context.fillStyle =  "red";
+    //   }
+    //   _context.strokeStyle =  "rgba(255,255,255,0)";
+    //   spwDraw.drawCell(t);
+    //   _context.stroke();
+    //   _context.fill();
+    //   _context.closePath();
+    // });
+  }
   function draw(){
     spwDraw.drawImageProp(_context, _backRes, 0, 0, _width, _height);
     _imageData = _context.getImageData(0, 0, _width, _height);
 
-    
-    // spwVo.make();
 
-    // var asq = 300;
-    // spwVo.triangles = spwVo.voronoi(spwVo.samples.filter(function(s, i) {
-    //   if(typeof s.musics !== 'undefined'){
-    //     spwVo.samples.splice(i,1);
-    //   };
-    //   return typeof s.melting !== 'undefined';
-    // })).triangles().filter(function(t, i) {
-    //     var evaluated = spwUtils.getDistance(t[0],t[1]) < asq && spwUtils.getDistance(t[0],t[2]) < asq && spwUtils.getDistance(t[1],t[2]) < asq;
-    //     return evaluated;
-    // });
-
-
-    if(_stageStatus === STAGE_INIT || _stageStatus === STAGE_READY){
-      var cen = spwUtils.getCenterAll(spwVo.triangles[spwVo.triPlayIndex]);
-      var x = Math.floor(cen[0]);
-      var y = Math.floor(cen[1]);
-      var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
-      _context.beginPath();
-      _context.fillStyle = rgba;
-      _context.strokeStyle =  "rgba(255,255,255,1)";
-      _context.lineWidth = 3;
-      spwDraw.drawCell(spwVo.triangles[spwVo.triPlayIndex]);
-      _context.stroke();
-      _context.fill();
-      _context.closePath();
+    if(_stageStatus === STAGE_INIT){
+      drawLoading();
+    }else if(_stageStatus === STAGE_READY){
+      drawReady();
     }else{
       if(_stageStatus === STAGE_FREEZE){
         var cen = spwUtils.getCenterAll(spwVo.triangles[spwVo.triPlayIndex]);
@@ -621,26 +705,37 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
     _stageStatus = STAGE_ENDING;
   }
   
-  function audioUpdate(){
-    var perAngle = 360 / _audioData.length;
-    _audioData.forEach(function(b, i){
-        spwVo.samples.push([
-          _curMouse[0] + Math.sin(perAngle*i) * (b*5)
-          ,_curMouse[1] + Math.cos(perAngle*i) * (b*5)
-        ]);
-        var mel = 0.5;
-        if(_curMouseEvent === 'mousehold'){
-          mel = 0.8;
-        }
-        spwVo.samples[spwVo.samples.length - 1].melting = mel;
-        spwVo.samples[spwVo.samples.length - 1].musics = true;
-    });
-  }
+  
+  function audioInit(){
+    _audioVis = document.getElementById('theAudio');
+    if(typeof _audioVis.readyState !== 'undefined' && _audioVis.readyState === 4 ) {
+      console.log('audio ready');
+      audioLoaded();
+    }else{
+      _audioVis.addEventListener('loadeddata', function() {
+        console.log('loadeddata');
+        // audioLoaded();
+      }, false);
+      _audioVis.addEventListener('canplay', function() {
+        console.log('canplay');
+        // audioLoaded();
+      }, false);
+      _audioVis.addEventListener('canplaythrough', function() {
+        console.log('canplaythrough');
+        audioLoaded();
+      }, false);
+
+    };
+  };
   function audioLoaded(){
     _stageStatus = STAGE_READY;
 
-    
-    
+    _audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
+    var source = _audioVis.ctx.createMediaElementSource(_audioVis); // creates audio source
+    _analyser = _audioVis.ctx.createAnalyser(); // creates analyserNode
+    source.connect(_audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
+    source.connect(_analyser); // connects the analyser node to the audioNode and the audioDestinationNode
+
     // _audioVis.node.onaudioprocess = function () {
     //     var array = new Uint8Array(_audioVis.analyser.frequencyBinCount);
     //     _audioVis.analyser.getByteFrequencyData(array);
@@ -663,6 +758,8 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
     setTimeout(function(){
       _stageStatus = STAGE_PLAYING;
     },_freezeTime);
+
+
   }
   function isPlayBtnPos(pos){
     return spwUtils.getDistance([_width/2,_height/2], pos) < _playBtnRadius/2;
@@ -728,6 +825,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
   function resize(w,h){
     _width = w;
     _height = h;
+    _canvasCen = [(w/2),(h/2)];
     _imageData = _context.getImageData(0, 0, _width, _height);
     var type = 'poisson';
     if(_stageStatus === STAGE_ENDING){
@@ -746,6 +844,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
     _curMouse = m;
   }
   function init(){
+    audioInit();
     spwDraw.context = _context;
     spwVo = new spwVoronoi(_width, _height, 'poisson', _playBtnRadius);
     update();
@@ -774,8 +873,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
   return {
     init : init,
     resize : resize,
-    userEvent : userEvent,
-    audioLoaded : audioLoaded,
+    userEvent : userEvent
   }
 };
 
@@ -825,34 +923,6 @@ var dreamSpring = dreamSpring || new function(){
       });
     }
   };
-  function initAudio(){
-    // _this.audioVis = new AudioVisualizer(60);
-    // _this.audioVis.request = _this.audioVis.sendRequest(_audioPath);
-    // _this.audioVis.node = _this.audioVis.setupAudioProcessing(_audioPath);
-    // _this.audioVis.request.onload = function () {
-    //   // _this.audioVis.loaded = true;
-    //   _springWaltz.audioLoaded();
-    // };
-
-    // var data = new Audio('resources/audios/spring_waltz.mp3');
-    _this.audioVis= document.createElement('audio'); // creates an html audio element
-    _this.audioVis.src = 'resources/audios/spring_waltz.mp3'; // sets the audio source to the dropped file
-    _this.audioVis.autoplay = false;
-    // _this.audioVis.play();
-    // _this.audioVis.play = false;
-    document.body.appendChild(_this.audioVis);
-    _this.audioVis.addEventListener('canplaythrough', function() { 
-      console.log('canplaythrough');
-       // _this.audioVis.play();
-        _springWaltz.audioLoaded();
-    }, false);
-
-    _this.audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
-    source = _this.audioVis.ctx.createMediaElementSource(_this.audioVis); // creates audio source
-    analyser = _this.audioVis.ctx.createAnalyser(); // creates analyserNode
-    source.connect(_this.audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
-    source.connect(analyser); // connects the analyser node to the audioNode and the audioDestinationNode
-  }
   function initCanvas(){
     _canvas = d3.select("body").append("canvas")
     _this.context = _canvas.node().getContext("2d");
@@ -907,9 +977,7 @@ var dreamSpring = dreamSpring || new function(){
   };
   _this.init = function(){
     if(_isSupport){
-
       initCanvas();
-      initAudio();
       window.onresize = windowResize;
     }else{
       // remove dom
