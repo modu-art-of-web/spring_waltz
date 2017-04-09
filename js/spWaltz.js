@@ -12,6 +12,14 @@ var _checkMobile = (function () {
    return check;
 })();
 
+var _checkVendor = (function(){
+  var vendor = "";
+  var styles = window.getComputedStyle(document.documentElement, '');
+  vendor = (Array.prototype.slice.call(styles).join('').match(/-(moz|webkit|ms)-/) || (styles.OLink === '' && ['', 'o']))[1];
+  if (vendor == "moz") vendor = "Moz";
+  return vendor;
+})();
+
 var spwDraw = spwDraw || {
   context : [],
   drawImageProp : function(ctx, img, x, y, w, h, offsetX, offsetY) {
@@ -228,7 +236,7 @@ var spwVoronoi = function(w, h, sampleType, playBtnRadius = 0){
 
       samples = addOutsideSampleing(samples);
     }else if(sampleType === 'random'){
-      var sampleNum = 100;
+      var sampleNum = 300;
       samples = d3.range(sampleNum).map(function(d, a, b, c, d) { 
         var samp = [Math.floor(Math.random() * (w + 1)), Math.floor(Math.random() * (h + 1))];
         samp.melting = 0;
@@ -308,7 +316,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
         'mouseup' : 0.05,
         'mousehold' : 0.1,
       },
-      _replayRadi = 24,
+      _replayRadi = 18,
       _replayMarginBottom = 60,
       _diagFind = [],
       _audioData = [],
@@ -357,7 +365,6 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
       // particle = particles[i++];
       // particle.position.y = (uintFrequencyData[i] + 80);
       // particle.material.color.setRGB(1,1 - uintFrequencyData[i]/255,1);
-
       particle = spwVo.samples[i++];
       particle[0] = _curMouse[0] + Math.sin(perAngle*i) * (value*5);
       particle[1] = _curMouse[1] + Math.cos(perAngle*i) * (value*5);
@@ -673,8 +680,8 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
       _context.closePath();
 
       
-      _context.drawImage(_snsImg, -5,0,90,100, _fbPos[0], _fbPos[1], _iconW, _iconH);
-      _context.drawImage(_snsImg, 95,0,90,100, _twPos[0], _twPos[1], _iconW, _iconH);
+      // _context.drawImage(_snsImg, -5,0,90,100, _fbPos[0], _fbPos[1], _iconW, _iconH);
+      // _context.drawImage(_snsImg, 95,0,90,100, _twPos[0], _twPos[1], _iconW, _iconH);
       // if(nextPolygons[0][0] === i){
       //   // _context.fillStyle =  "red";
       //   var pos = spwVo.samples[i];
@@ -758,7 +765,6 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
         _context.stroke();
         _context.closePath();
 
-        // _context.drawImage(_replayImg, _width/2 - _iconW, _height/2 + 50, _iconW, _iconH);
       })
     });
     _stageStatus = STAGE_ENDING;
@@ -767,24 +773,32 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
   
   function audioInit(){
     _audioVis = document.getElementById('theAudio');
-    if(typeof _audioVis.readyState !== 'undefined' && _audioVis.readyState === 4 ) {
-      console.log('audio ready');
-      audioLoaded();
-    }else{
-      _audioVis.addEventListener('loadeddata', function() {
-        console.log('loadeddata');
-        // audioLoaded();
-      }, false);
-      _audioVis.addEventListener('canplay', function() {
-        console.log('canplay');
-        // audioLoaded();
-      }, false);
-      _audioVis.addEventListener('canplaythrough', function() {
-        console.log('canplaythrough');
+    if(/Safari/.test(navigator.userAgent) && /Apple Computer/.test(navigator.vendor)){
+      setTimeout(function(){
         audioLoaded();
-      }, false);
+      }, 3000);
+    }else{
+      if(typeof _audioVis.readyState !== 'undefined' && _audioVis.readyState > 3 ) {
+        console.log('audio ready');
+        audioLoaded();
+      }else{
+        _audioVis.addEventListener('loadeddata', function() {
+          alert('loadeddata');
+          // audioLoaded();
+        }, false);
+        _audioVis.addEventListener('canplay', function() {
+          alert('canplay');
+          // audioLoaded();
+        }, false);
+        _audioVis.addEventListener('canplaythrough', function() {
+          alert('canplaythrough');
+          audioLoaded();
+        }, false);
 
-    };
+      };
+    }
+    
+    
   };
   function audioLoaded(){
     _stageStatus = STAGE_READY;
@@ -974,9 +988,9 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
 
 var dreamSpring = dreamSpring || new function(){
 
-  var _isSupport = true,
-      // _isMobile = _checkMobile,
-      _isMobile = true,
+  var _isSupport = _checkVendor,
+      _isMobile = _checkMobile,
+      // _isMobile = true,
       _mouseholding = true,
       _imgNum = 12,
       _imgPath = '',
@@ -1017,7 +1031,7 @@ var dreamSpring = dreamSpring || new function(){
     _this.backRes = video;
     _this.backRes.resType = 'video';
     // video.play();
-    if(typeof video.readyState !== 'undefined' && video.readyState === 4 ) {
+    if(typeof video.readyState !== 'undefined' && video.readyState > 3 ) {
       startSpringWalts();
     }else{
       video.addEventListener('loadeddata', function() {
@@ -1080,13 +1094,16 @@ var dreamSpring = dreamSpring || new function(){
     };
     _springWaltz.resize(_this.width, _this.height);
   };
+  
   _this.init = function(){
     if(_isSupport){
+      document.getElementById('sp_fullwrap').className = '';
       initCanvas();
       window.onresize = windowResize;
     }else{
       // remove dom
       // make 404 page
+      document.getElementById('sp_fullwrap').innerHTML = '<h1>Sorry</h1><div class="message">Spring Waltz was created with HTML5 and CSS3.<br>It\'s a Chrome experiment and you can see perfectly on Chrome browser.<br>Please use <a href="http://www.google.com/chrome" target="_blank">Google Chrome browser</a>.</div>';
       return;
     };
 
