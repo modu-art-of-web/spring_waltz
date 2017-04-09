@@ -535,7 +535,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
       }
       
       console.log('_averageMeting : ' + _averageMeting);
-      if(_averageMeting < 0.25){
+      if(_averageMeting < 0.75){
 
         // spwVo.polygons.forEach(function(p, i){
         //   _context.beginPath();
@@ -1097,12 +1097,12 @@ var dreamSpring = dreamSpring || new function(){
   
   _this.init = function(){
     if(_isSupport){
-      document.getElementById('sp_fullwrap').className = '';
       initCanvas();
       window.onresize = windowResize;
     }else{
       // remove dom
       // make 404 page
+      document.getElementById('sp_fullwrap').className = 'screen-bg';
       document.getElementById('sp_fullwrap').innerHTML = '<h1>Sorry</h1><div class="message">Spring Waltz was created with HTML5 and CSS3.<br>It\'s a Chrome experiment and you can see perfectly on Chrome browser.<br>Please use <a href="http://www.google.com/chrome" target="_blank">Google Chrome browser</a>.</div>';
       return;
     };
