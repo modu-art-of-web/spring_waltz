@@ -680,16 +680,16 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
       _context.closePath();
 
       
-      // _context.drawImage(_snsImg, -5,0,90,100, _fbPos[0], _fbPos[1], _iconW, _iconH);
-      // _context.drawImage(_snsImg, 95,0,90,100, _twPos[0], _twPos[1], _iconW, _iconH);
-      // if(nextPolygons[0][0] === i){
-      //   // _context.fillStyle =  "red";
-      //   var pos = spwVo.samples[i];
-      //   _context.drawImage(_snsImg, pos[0] - _iconW/2, pos[1] - _iconH/2, _iconW, _iconH);
-      // }else if(nextPolygons[10][0] === i){
-      //   var pos = spwVo.samples[i];
-      //   _context.drawImage(_snsImg, pos[0] - _iconW/2, pos[1] - _iconH/2, _iconW, _iconH);
-      // }
+      _context.drawImage(_snsImg, -5,0,90,100, _fbPos[0], _fbPos[1], _iconW, _iconH);
+      _context.drawImage(_snsImg, 95,0,90,100, _twPos[0], _twPos[1], _iconW, _iconH);
+      if(nextPolygons[0][0] === i){
+        // _context.fillStyle =  "red";
+        var pos = spwVo.samples[i];
+        _context.drawImage(_snsImg, pos[0] - _iconW/2, pos[1] - _iconH/2, _iconW, _iconH);
+      }else if(nextPolygons[10][0] === i){
+        var pos = spwVo.samples[i];
+        _context.drawImage(_snsImg, pos[0] - _iconW/2, pos[1] - _iconH/2, _iconW, _iconH);
+      }
       
     });
 
