@@ -236,7 +236,7 @@ var spwVoronoi = function(w, h, sampleType, playBtnRadius = 0){
 
       samples = addOutsideSampleing(samples);
     }else if(sampleType === 'random'){
-      var sampleNum = 300;
+      var sampleNum = 150;
       samples = d3.range(sampleNum).map(function(d, a, b, c, d) { 
         var samp = [Math.floor(Math.random() * (w + 1)), Math.floor(Math.random() * (h + 1))];
         samp.melting = 0;
@@ -682,36 +682,8 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
       
       _context.drawImage(_snsImg, -5,0,90,100, _fbPos[0], _fbPos[1], _iconW, _iconH);
       _context.drawImage(_snsImg, 95,0,90,100, _twPos[0], _twPos[1], _iconW, _iconH);
-      if(nextPolygons[0][0] === i){
-        // _context.fillStyle =  "red";
-        var pos = spwVo.samples[i];
-        _context.drawImage(_snsImg, pos[0] - _iconW/2, pos[1] - _iconH/2, _iconW, _iconH);
-      }else if(nextPolygons[10][0] === i){
-        var pos = spwVo.samples[i];
-        _context.drawImage(_snsImg, pos[0] - _iconW/2, pos[1] - _iconH/2, _iconW, _iconH);
-      }
       
     });
-
-    // spwVo.samples.forEach(function(s, i){
-    //   _context.beginPath();
-    //   spwDraw.drawSite(s);
-    //   if(typeof s.playbtn === 'undefined'){
-    //     _context.fillStyle = "black";
-    //     _context.strokeStyle = "yellow";
-    //   }else{
-    //     _context.fillStyle = "red";
-    //     _context.strokeStyle = "white";
-    //   }
-    //   // _context.font = "15px Julius Sans One,sans-serif, Arial";
-    //   // _context.fillStyle = 'red';
-    //   // _context.textAlign = 'center';
-    //   // _context.fillText(i,s[0],s[1]);
-
-    //   _context.fill();
-    //   _context.stroke();
-    //   _context.closePath();
-    // });
 
     geoMerge.coordinates.forEach(function(polygon) {
       polygon.forEach(function(ring, i) {
