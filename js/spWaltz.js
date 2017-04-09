@@ -401,12 +401,12 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
         
         // console.log('_audioVis.audioContext.currentTime : ' + _audioVis.audioContext.currentTime);
         // console.log('_audioVis.sourceBuffer.buffer.duration : ' + _audioVis.sourceBuffer.buffer.duration);
-        if(_audioVis.audioContext.currentTime > _audioVis.sourceBuffer.buffer.duration ){
-          if(_stageStatus !== STAGE_ENDING){
-            spwVo.resample('random');
-          }
-          drawEnding();
-        }
+        // if(_audioVis.audioContext.currentTime > _audioVis.sourceBuffer.buffer.duration ){
+        //   if(_stageStatus !== STAGE_ENDING){
+        //     spwVo.resample('random');
+        //   }
+        //   drawEnding();
+        // }
         spwVo.triangles = spwVo.voronoi(spwVo.samples.filter(function(s, i) {
           if(typeof s.musics !== 'undefined'){
             spwVo.samples.splice(i,1);
@@ -638,20 +638,24 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
   }
   function audioLoaded(){
     _stageStatus = STAGE_READY;
-    _audioVis.node.onaudioprocess = function () {
-        var array = new Uint8Array(_audioVis.analyser.frequencyBinCount);
-        _audioVis.analyser.getByteFrequencyData(array);
-        var step = Math.round(array.length / _audioVis.numberOfBars);
 
-        //Iterate through the bars and scale the z axis
-        for (var i = 0; i < _audioVis.numberOfBars; i++) {
-            var value = array[i * step] / 4;
-            _audioData[i] = value;
-        }
-    }
+    
+    
+    // _audioVis.node.onaudioprocess = function () {
+    //     var array = new Uint8Array(_audioVis.analyser.frequencyBinCount);
+    //     _audioVis.analyser.getByteFrequencyData(array);
+    //     var step = Math.round(array.length / _audioVis.numberOfBars);
+
+    //     //Iterate through the bars and scale the z axis
+    //     for (var i = 0; i < _audioVis.numberOfBars; i++) {
+    //         var value = array[i * step] / 4;
+    //         _audioData[i] = value;
+    //     }
+    // }
   }
   function startAudio(){
-    _audioVis.start(_audioVis.request.response);
+    // _this.audioVis.play();
+    _audioVis.play();
     // _audioVis.start ? _audioVis.start(_audioVis.request.response) : _audioVis.noteOn(_audioVis.request.response);
     setTimeout(function(){
       _stageStatus = STAGE_FREEZE;
@@ -781,7 +785,7 @@ var dreamSpring = dreamSpring || new function(){
       _isMobile = true,
       _mouseholding = true,
       _audioPath = 'resources/audios/spring_waltz.mp3',
-      _imgPath = 'resources/imgs/sp1.jpg',
+      _imgPath = 'resources/imgs/sp4.jpg',
       _mouseTimeOut,
       _springWaltz,
       _canvas, 
@@ -822,13 +826,32 @@ var dreamSpring = dreamSpring || new function(){
     }
   };
   function initAudio(){
-    _this.audioVis = new AudioVisualizer(60);
-    _this.audioVis.request = _this.audioVis.sendRequest(_audioPath);
-    _this.audioVis.node = _this.audioVis.setupAudioProcessing(_audioPath);
-    _this.audioVis.request.onload = function () {
-      // _this.audioVis.loaded = true;
-      _springWaltz.audioLoaded();
-    };
+    // _this.audioVis = new AudioVisualizer(60);
+    // _this.audioVis.request = _this.audioVis.sendRequest(_audioPath);
+    // _this.audioVis.node = _this.audioVis.setupAudioProcessing(_audioPath);
+    // _this.audioVis.request.onload = function () {
+    //   // _this.audioVis.loaded = true;
+    //   _springWaltz.audioLoaded();
+    // };
+
+    // var data = new Audio('resources/audios/spring_waltz.mp3');
+    _this.audioVis= document.createElement('audio'); // creates an html audio element
+    _this.audioVis.src = 'resources/audios/spring_waltz.mp3'; // sets the audio source to the dropped file
+    _this.audioVis.autoplay = false;
+    // _this.audioVis.play();
+    // _this.audioVis.play = false;
+    document.body.appendChild(_this.audioVis);
+    _this.audioVis.addEventListener('canplaythrough', function() { 
+      console.log('canplaythrough');
+       // _this.audioVis.play();
+        _springWaltz.audioLoaded();
+    }, false);
+
+    _this.audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
+    source = _this.audioVis.ctx.createMediaElementSource(_this.audioVis); // creates audio source
+    analyser = _this.audioVis.ctx.createAnalyser(); // creates analyserNode
+    source.connect(_this.audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
+    source.connect(analyser); // connects the analyser node to the audioNode and the audioDestinationNode
   }
   function initCanvas(){
     _canvas = d3.select("body").append("canvas")
