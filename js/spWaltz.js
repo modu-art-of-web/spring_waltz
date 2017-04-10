@@ -205,7 +205,8 @@ var spwVoronoi = function(w, h, sampleType, playBtnRadius){
 
       samples = addOutsideSampleing(samples);
     }else if(sampleType === 'random'){
-      var sampleNum = 150;
+      var sampleNum = Math.floor(w / 10);
+      
       samples = d3.range(sampleNum).map(function(d, a, b, c, d) { 
         var samp = [Math.floor(Math.random() * (w + 1)), Math.floor(Math.random() * (h + 1))];
         samp.melting = 0;
@@ -231,7 +232,7 @@ var spwVoronoi = function(w, h, sampleType, playBtnRadius){
   return _this;
 };
 
-var springWaltz = springWaltz || function(w, h, ctx, back, audio){
+var springWaltz = springWaltz || function(w, h, ctx, back){
 
   var spwVo,
       _spUrl = 'http://springwaltz.taejaehan.com',
@@ -239,7 +240,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
       _height = h,
       _canvasCen = [w/2, h/2],
       _backRes = back,
-      _audioVis = audio,
+      _audioVis = '',
       _analyser = '',
       _context = ctx,
       _imageData = _context.getImageData(0, 0, _width, _height),
@@ -249,14 +250,17 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
       STAGE_FREEZE = 2,
       STAGE_PLAYING = 3,
       STAGE_ENDING = 4,
+      _endMeltingAvg = 0.75,
+      _drawEndingFrame = 0,
+      _endingStep = [5,8,13],
       _stageStatus = STAGE_INIT,  //0 init, 1 ready, 2 playing, 3 done
       _playBtnRadius = (_width*0.1) > 60 ? 60 : _width*0.1,
       _fNow = 0,
       _fThen = Date.now(),
-      _fps = 60,                  /* 60 ms */
+      _fps = 30,                  /* 30 ms */
       _fInterval = (1000/_fps),   //frame rate
       _fDelta = 0,
-      _freezeTime = 4000,
+      _freezeTime = 2300,
       _freezeRatio = 1 / (_fps * (_freezeTime / 1000)),
       _meltRatio = {
         'mousemove' : 0.01,
@@ -264,6 +268,8 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
         'mouseup' : 0.05,
         'mousehold' : 0.1,
       },
+      _meltingDownLimit = 50,
+      _meltingDownNum = 0,
       _replayRadi = 18,
       _replayMarginBottom = 60,
       _diagFind = [],
@@ -356,7 +362,9 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
         _fThen = _fNow - (_fDelta % _fInterval);
         if(_stageStatus === STAGE_PLAYING){
           _diagFind = spwVo.meltAtPos(_curMouse[0],_curMouse[1],50,_meltRatio['mousemove']);
-          audioUpdate();
+          if(!spwCheck.isFbInApp){
+            audioUpdate();
+          }
         };
         draw();
       }
@@ -427,7 +435,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
     spwDraw.drawImageProp(_context, _backRes, 0, 0, _width, _height);
     _imageData = _context.getImageData(0, 0, _width, _height);
 
-    console.log('draw _stageStatus : '  + _stageStatus);
+    // console.log('draw _stageStatus : '  + _stageStatus);
     if(_stageStatus === STAGE_INIT){
       drawLoading();
     }else if(_stageStatus === STAGE_READY){
@@ -464,12 +472,20 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
           if(typeof s.musics !== 'undefined'){
             spwVo.samples.splice(i,1);
           };
+          if(typeof s.down !== 'undefined'){
+            s[1] += 10;
+            s.melting += 0.05;
+            if(s[1] > _height || s.melting > 0.8){
+              spwVo.samples.splice(i,1);
+              _meltingDownNum--;
+            };
+          };
           return typeof s.melting !== 'undefined';
         })).triangles();
       }
       
-      console.log('_averageMeting : ' + _averageMeting);
-      if(_averageMeting < 0.75){
+      // console.log('_averageMeting : ' + _averageMeting);
+      if(_averageMeting < _endMeltingAvg){
 
         // spwVo.polygons.forEach(function(p, i){
         //   _context.beginPath();
@@ -510,7 +526,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
               t.opacity = _freezeRatio;
             }else{
               if(!(i % Math.floor(Math.random()* 5) + 1)){
-                if(t.opacity < 1){
+                if(t.opacity < 0.7){
                   t.opacity += t.opacity;
                 }
               }
@@ -518,11 +534,40 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
           }
           
           if(_stageStatus === STAGE_PLAYING){
-            var meltingAver = (t[0].melting + t[1].melting + t[2].melting) / 3;
+            var meltingAver = 0;
+
+            t.forEach(function(ts, j){
+              // if(ts.melting > 0.6){
+              //   // console.log('down : ' + ts);
+              //   var downSamp = [ts[0], ts[1]];
+              //   downSamp.melting = 0;
+              //   downSamp.down = true;
+              //   spwVo.samples.push(downSamp);
+              // };
+              // if(typeof ts.down !== 'undefined'){
+              //   console.log('down : ' + ts);
+              //   ts[1] += 10;
+              // };
+              meltingAver += ts.melting;
+
+            });
+            meltingAver = meltingAver / 3;
+            // console.log('_meltingDownNum : ' + _meltingDownNum);
+            if(_meltingDownLimit > _meltingDownNum && meltingAver > 0.4 && meltingAver < 0.8){
+              console.log('DOWN');
+              var downSamp = [x, y];
+              downSamp.melting = 0;
+              downSamp.down = true;
+              downSamp.originY = y;
+              spwVo.samples.push(downSamp);
+              _meltingDownNum++;
+            };
             meltingAver > 1 ? meltingAver = 1 : meltingAver = meltingAver;
             t.opacity = 1 - meltingAver;
             totalMelting += meltingAver;
           };
+
+
 
           rgba.opacity = t.opacity;
           _context.fillStyle = rgba + "";
@@ -581,6 +626,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
     var limitX = _width * 0.1;
     var limitY = _height * 0.25;
     var nextPolygons = [];
+
     var geoMerge = topojson.merge(topology, geo.filter(function(d, i) { 
       var x = d.data[0];
       var y = d.data[1];
@@ -607,7 +653,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
 
       _context.beginPath();
       var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
-      rgba.opacity = 0.6;
+      rgba.opacity = _drawEndingFrame / _endingStep[0];
       _context.fillStyle =  rgba + "";
       spwDraw.drawCell(p);
       _context.fill();
@@ -619,102 +665,115 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
       
     });
 
-    geoMerge.coordinates.forEach(function(polygon) {
-      polygon.forEach(function(ring, i) {
-        _context.beginPath();
-        spwUtils.renderSinglePolygon(_context, ring, _width, _height);
-        _context.fillStyle = "rgba(255,255,255,0.7)";
-        _context.lineWidth = 1.5;
-        _context.lineJoin = "miter";
-        _context.strokeStyle = "rgba(255,255,255,1)";
-        _context.fill();
-        _context.stroke();
-        _context.closePath();
+    if(_drawEndingFrame / _endingStep[0] > 1){
+      geoMerge.coordinates.forEach(function(polygon) {
+        polygon.forEach(function(ring, i) {
+          _context.beginPath();
+          spwUtils.renderSinglePolygon(_context, ring, _width, _height);
+          var strokeOpa = _drawEndingFrame / _endingStep[1] - 1;
+          var fillOpa = strokeOpa > 0.7 ? 0.7 : strokeOpa;
+          _context.fillStyle = "rgba(255,255,255,"+fillOpa+")";
+          _context.lineWidth = 1.5;
+          _context.lineJoin = "miter";
+          _context.strokeStyle = "rgba(255,255,255,"+strokeOpa+")";
+          _context.fill();
+          _context.stroke();
+          _context.closePath();
 
+          if(_drawEndingFrame / _endingStep[1] > 2){
+            var cen = [_width/2, _height/2 - _replayMarginBottom];
+            var triRadi = _replayRadi/6;
+            var opa = _drawEndingFrame / _endingStep[2] - 2;
+            _context.beginPath();
+            _context.arc(cen[0], cen[1], _replayRadi, 0, 1.5 * Math.PI, false);
+            _context.lineWidth = _replayRadi/5 > 6 ? 6 : _replayRadi/5;
+            _context.strokeStyle = "rgba(153,153,153,"+opa+")";
+            _context.stroke();
+            _context.closePath();
 
-        var cen = [_width/2, _height/2 - _replayMarginBottom];
-        var triRadi = _replayRadi/6;
-        _context.beginPath();
-        _context.arc(cen[0], cen[1], _replayRadi, 0, 1.5 * Math.PI, false);
-        _context.lineWidth = _replayRadi/5 > 6 ? 6 : _replayRadi/5;
-        _context.strokeStyle = "#999";
-        _context.stroke();
-        _context.closePath();
+            _context.beginPath();
+            _context.moveTo(cen[0] , cen[1] - _replayRadi - triRadi);
+            _context.lineTo(cen[0] , cen[1] - _replayRadi + triRadi);
+            _context.lineTo(cen[0] + triRadi * 2 , cen[1] - _replayRadi);
+            _context.moveTo(cen[0] - triRadi, cen[1] - triRadi * 2);
+            _context.lineTo(cen[0] - triRadi, cen[1] + triRadi * 2);
+            _context.lineTo(cen[0] + triRadi * 3 , cen[1]);
+            _context.fillStyle = "rgba(153,153,153,"+opa+")";
+            _context.fill();
+            _context.closePath();
 
-        _context.beginPath();
-        _context.moveTo(cen[0] , cen[1] - _replayRadi - triRadi);
-        _context.lineTo(cen[0] , cen[1] - _replayRadi + triRadi);
-        _context.lineTo(cen[0] + triRadi * 2 , cen[1] - _replayRadi);
-        _context.moveTo(cen[0] - triRadi, cen[1] - triRadi * 2);
-        _context.lineTo(cen[0] - triRadi, cen[1] + triRadi * 2);
-        _context.lineTo(cen[0] + triRadi * 3 , cen[1]);
-        _context.fillStyle = "#999";
-        _context.fill();
-        _context.closePath();
+            _imageData = _context.getImageData(0, 0, _width, _height);
+            var avrRgb = spwUtils.getAverageColourAsRGB(_imageData.data);
+            _context.font = "23px Julius Sans One,sans-serif, Arial";
+            _context.fillStyle = avrRgb + '';
+            avrRgb.a = opa;
+            _context.textAlign = 'center';
+            _context.fillText('Voices Of Spring Waltz',_width/2,_height/2);
+            // _context.font = "16px Julius Sans One,sans-serif, Arial";
+            // _context.fillText('- Johann Strauss Jr.',_width/2,_height/2 + 23);
 
-        _imageData = _context.getImageData(0, 0, _width, _height);
-        var avrRgb = spwUtils.getAverageColourAsRGB(_imageData.data);
-        _context.font = "23px Julius Sans One,sans-serif, Arial";
-        _context.fillStyle = avrRgb + '';
-        _context.textAlign = 'center';
-        _context.fillText('Voices Of Spring Waltz',_width/2,_height/2);
-        // _context.font = "16px Julius Sans One,sans-serif, Arial";
-        // _context.fillText('- Johann Strauss Jr.',_width/2,_height/2 + 23);
-
-        _context.font = "16px Julius Sans One,sans-serif, Arial";
-        _context.beginPath();
-        _context.fillText('by Taejae Han',_width/2,_height/2 + 25);
-        _context.moveTo(_width/2 - _authorLinkSize[0]/2 ,_height/2+ _authorLinkSize[1]);
-        _context.lineTo(_width/2 + _authorLinkSize[0]/2,_height/2+ _authorLinkSize[1]);
-        _context.lineWidth = 1;
-        _context.strokeStyle = avrRgb + '';
-        _context.stroke();
-        _context.closePath();
-
-      })
-    });
+            _context.font = "16px Julius Sans One,sans-serif, Arial";
+            _context.beginPath();
+            _context.fillText('by Taejae Han',_width/2,_height/2 + 25);
+            _context.moveTo(_width/2 - _authorLinkSize[0]/2 ,_height/2+ _authorLinkSize[1]);
+            _context.lineTo(_width/2 + _authorLinkSize[0]/2,_height/2+ _authorLinkSize[1]);
+            _context.lineWidth = 1;
+            _context.strokeStyle = avrRgb + '';
+            _context.stroke();
+            _context.closePath();
+          }
+        })
+      });
+    }
+    
     _stageStatus = STAGE_ENDING;
+    _drawEndingFrame++;
   }
   
   
   function audioInit(){
-    _audioVis = document.getElementById('theAudio');
-    if(spwCheck.isSafari){
-      setTimeout(function(){
-        audioLoaded();
-      }, 3000);
-    }else{
-      if(typeof _audioVis.readyState !== 'undefined' && _audioVis.readyState > 3 ) {
-        console.log('audio ready');
-        audioLoaded();
-      }else{
-        _audioVis.addEventListener('loadeddata', function() {
-          alert('loadeddata');
-          // audioLoaded();
-        }, false);
-        _audioVis.addEventListener('canplay', function() {
-          alert('canplay');
-          // audioLoaded();
-        }, false);
-        _audioVis.addEventListener('canplaythrough', function() {
-          alert('canplaythrough');
+    if(!spwCheck.isFbInApp){
+      _audioVis = document.getElementById('theAudio');
+      if(spwCheck.isSafari){
+        setTimeout(function(){
           audioLoaded();
-        }, false);
+        }, 3000);
+      }else{
+        if(typeof _audioVis.readyState !== 'undefined' && _audioVis.readyState > 3 ) {
+          console.log('audio ready');
+          audioLoaded();
+        }else{
+          _audioVis.addEventListener('loadeddata', function() {
+            alert('loadeddata');
+            // audioLoaded();
+          }, false);
+          _audioVis.addEventListener('canplay', function() {
+            alert('canplay');
+            // audioLoaded();
+          }, false);
+          _audioVis.addEventListener('canplaythrough', function() {
+            alert('canplaythrough');
+            audioLoaded();
+          }, false);
 
-      };
+        };
+      }
+    }else{
+      audioLoaded();
     }
+    
     
     
   };
   function audioLoaded(){
     _stageStatus = STAGE_READY;
-
-    _audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
-    var source = _audioVis.ctx.createMediaElementSource(_audioVis); // creates audio source
-    _analyser = _audioVis.ctx.createAnalyser(); // creates analyserNode
-    source.connect(_audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
-    source.connect(_analyser); // connects the analyser node to the audioNode and the audioDestinationNode
-
+    if(!spwCheck.isFbInApp){
+      _audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
+      var source = _audioVis.ctx.createMediaElementSource(_audioVis); // creates audio source
+      _analyser = _audioVis.ctx.createAnalyser(); // creates analyserNode
+      source.connect(_audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
+      source.connect(_analyser); // connects the analyser node to the audioNode and the audioDestinationNode
+    }
     // _audioVis.node.onaudioprocess = function () {
     //     var array = new Uint8Array(_audioVis.analyser.frequencyBinCount);
     //     _audioVis.analyser.getByteFrequencyData(array);
@@ -729,7 +788,9 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
   }
   function startAudio(){
     // _this.audioVis.play();
-    _audioVis.play();
+    if(!spwCheck.isFbInApp){
+      _audioVis.play();
+    }
     // _audioVis.start ? _audioVis.start(_audioVis.request.response) : _audioVis.noteOn(_audioVis.request.response);
     setTimeout(function(){
       animationPlay();
@@ -740,6 +801,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
     _stageStatus = STAGE_FREEZE;
     setTimeout(function(){
       _stageStatus = STAGE_PLAYING;
+      _drawEndingFrame = 0;
     },_freezeTime);
   }
   
@@ -832,11 +894,28 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
     return ((pos[0] > _width/2 - _authorLinkSize[0]/2) && (pos[0] < _width/2 + _authorLinkSize[0]/2) && pos[1] > _height/2 + 9 && pos[1] < _height/2 + _authorLinkSize[1]);
   }
   function userEvent(type, m){
+
     if(_stageStatus === STAGE_PLAYING){
       _curMouseEvent = type;
       _diagFind = spwVo.meltAtPos(m[0],m[1],50,_meltRatio[type]);
-    }else if(_stageStatus === STAGE_READY && type === 'mouseup' && isPlayBtnPos(m)){
-      startAudio();
+    }else if(_stageStatus === STAGE_READY && isPlayBtnPos(m)){
+      if(type === 'mousemove'){
+        // spwVo.triangles[spwVo.triPlayIndex][0][0] += 1;
+        // spwVo.triangles[spwVo.triPlayIndex][0][1] += 1;
+        console.log('mousemove');
+      }else if(type === 'mousedown'){
+        // spwVo.triangles[spwVo.triPlayIndex][0][0] += 5;
+        // spwVo.triangles[spwVo.triPlayIndex][0][1] += 5;
+        // spwVo.triangles[spwVo.triPlayIndex][1][0] += 5;
+        // spwVo.triangles[spwVo.triPlayIndex][1][1] -= 5;
+        // spwVo.triangles[spwVo.triPlayIndex][2][0] -= 5;
+        // spwVo.triangles[spwVo.triPlayIndex][2][1] += 0;
+        console.log('mousedown');
+      }else if(type === 'mouseup'){
+        console.log('mouseup');
+        startAudio();
+      }
+      
     }else if(_stageStatus === STAGE_ENDING && type === 'mouseup'){
       if(isShareFbPos(m)){
         window.open('http://www.facebook.com/sharer/sharer.php?u='+_spUrl);
@@ -906,12 +985,12 @@ var dreamSpring = dreamSpring || new function(){
       _canvas, 
       _this = this;
 
-  _this.width, _this.height, _this.context, _this.backRes, _this.audioVis;
+  _this.width, _this.height, _this.context, _this.backRes;
 
   function startSpringWalts(){
     
     if(_springWaltz === null){
-      _springWaltz = new springWaltz(window.innerWidth, window.innerHeight, _this.context, _this.backRes, _this.audioVis);
+      _springWaltz = new springWaltz(window.innerWidth, window.innerHeight, _this.context, _this.backRes);
       _springWaltz.init();
       setMouseEvent();
       windowResize();
