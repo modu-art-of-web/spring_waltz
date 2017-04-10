@@ -3,9 +3,6 @@
 //     return true;
 // }
 
-
-
-
 var spwDraw = spwDraw || {
   context : [],
   drawImageProp : function(ctx, img, x, y, w, h, offsetX, offsetY) {
@@ -72,7 +69,7 @@ var spwDraw = spwDraw || {
   },
 }
 
-var spwVoronoi = function(w, h, sampleType, playBtnRadius = 0){
+var spwVoronoi = function(w, h, sampleType, playBtnRadius){
   var _this = this;
   _this.w = w,
   _this.h = h,
@@ -97,8 +94,6 @@ var spwVoronoi = function(w, h, sampleType, playBtnRadius = 0){
           && typeof t[1].playbtn !== 'undefined'){
           _this.triPlayIndex = i;
         };
-        // var evaluated = that.dsq(t[0],t[1]) < asq && that.dsq(t[0],t[2]) < asq && that.dsq(t[1],t[2]) < asq;
-        // return evaluated;
         return true;
     });
   };
@@ -125,7 +120,6 @@ var spwVoronoi = function(w, h, sampleType, playBtnRadius = 0){
     do {
       cell = diagram.cells[i=next];
       next = null;
-      // polygons[i].background = 'orange';
 
       samples[i].melting += meltRatio * 0.05;
       
@@ -136,11 +130,7 @@ var spwVoronoi = function(w, h, sampleType, playBtnRadius = 0){
           ea = edge.right;
         }
         if (ea){
-          
-          // if( polygons[ea.index].background != 'orange'){
-          //   polygons[ea.index].background = 'green';
-          //   result.around.push(ea.index); 
-          // };
+      
           samples[ea.index].melting += meltRatio;
           var dx = x - ea[0],
               dy = y - ea[1],
@@ -200,14 +190,7 @@ var spwVoronoi = function(w, h, sampleType, playBtnRadius = 0){
         [cen[0] - playBtnRadius, cen[1] + playBtnRadius],
         [cen[0] + playBtnRadius, cen[1]]
       ];
-      // var playBtnSample = [
-      //   [cen[0] , cen[1] ],
-      //   [cen[0] - playBtnRadius, cen[1]],
-      //   [cen[0] + playBtnRadius, cen[1] + playBtnRadius],
-      //   [cen[0] + playBtnRadius, cen[1] - playBtnRadius],
-      //   // [cen[0] - playBtnRadius/5, cen[1] + playBtnRadius*1.5],
-      //   // [cen[0] - playBtnRadius/5, cen[1] - playBtnRadius*1.5],
-      // ];
+
       playBtnSample.forEach(function(pb, i){
         pb.melting = defMelt;
         pb.playbtn = true;
@@ -228,28 +211,7 @@ var spwVoronoi = function(w, h, sampleType, playBtnRadius = 0){
         samp.melting = 0;
         return samp; 
       });
-      // samples = d3.range(300).map(function(d) {
-
-      //   var endBoxW, endBoxH, xLimit, yLimit;
-      //   ((w * 0.8) > 500) ? endBoxW = 500 : endBoxW = w * 0.8;
-      //   ((h * 0.5) > 300) ? endBoxH = 300 : endBoxH = h * 0.5;
-      //   var limitW = (w - endBoxW) / 2;
-      //   var limitH = (h - endBoxH) / 2;
-      //   (Math.random()>.5) ? xLimit = [0,limitW] : xLimit = [(limitW+endBoxW), w];
-        
-
-      //   var xRan, yRan;
-      //   if(Math.random()>.5){
-      //     xRan = d3.randomUniform(0, w)();
-      //     (Math.random()>.5) ? yRan = d3.randomUniform(0,limitH)() : yRan = d3.randomUniform((limitH+endBoxH), h)();
-      //   }else{
-      //     yRan = d3.randomUniform(0, h)();
-      //     (Math.random()>.5) ? xRan = d3.randomUniform(0,limitW)() : xRan = d3.randomUniform((limitW+endBoxW), w)();
-      //   };
-      //   return [xRan, yRan]; 
-      // });
-      // samples.push([w/2, h/2]);
-
+    
     }else if(sampleType === 'ending'){
 
       // samples = d3.range(num).map(function(d) { return [Math.floor(Math.random() * (w + 1)), Math.floor(Math.random() * (h + 1))]; });
@@ -321,21 +283,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back, audio){
   function setup(){
 
   }
-  // function audioUpdate(){
-  //   var perAngle = 360 / _audioData.length;
-  //   _audioData.forEach(function(b, i){
-  //       spwVo.samples.push([
-  //         _curMouse[0] + Math.sin(perAngle*i) * (b*5)
-  //         ,_curMouse[1] + Math.cos(perAngle*i) * (b*5)
-  //       ]);
-  //       var mel = 0.5;
-  //       if(_curMouseEvent === 'mousehold'){
-  //         mel = 0.8;
-  //       }
-  //       spwVo.samples[spwVo.samples.length - 1].melting = mel;
-  //       spwVo.samples[spwVo.samples.length - 1].musics = true;
-  //   });
-  // }
+
   function audioUpdate(){
     var uintFrequencyData = new Uint8Array(_analyser.frequencyBinCount);
     // var timeFrequencyData = new Uint8Array(_analyser.fftSize);

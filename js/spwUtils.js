@@ -1,7 +1,7 @@
 var spwUtils = spwUtils || function() {
   return{
       // Based on https://www.jasondavies.com/poisson-disc/
-      poissonDiscSampler : function(width, height, radius, playRadius = 0 ) {
+      poissonDiscSampler : function(width, height, radius, playRadius) {
         // width = width+ 500;
         // height = height+ 500;
         var k = 30, // maximum number of samples before rejection
@@ -332,3 +332,17 @@ var spwUtils = spwUtils || function() {
       }
     };
 }();
+
+
+if(!window.requestAnimationFrame){
+    window.requestAnimationFrame = (function(){
+        return  window.requestAnimationFrame       ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame    ||
+            window.oRequestAnimationFrame      ||
+            window.msRequestAnimationFrame     ||
+            function(callback){
+                window.setTimeout(callback, 1000 / 60);
+            };
+    })();
+};
