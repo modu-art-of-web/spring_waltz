@@ -624,6 +624,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     var topology = spwUtils.computeTopology(spwVo.voronoi(spwVo.samples));
     var geo = topology.objects.voronoi.geometries;
     var limitX = _width * 0.1;
+    if(spwUtils.isMobile) limitX = _width * 0.01;
     var limitY = _height * 0.25;
     var nextPolygons = [];
 
@@ -800,8 +801,9 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     
     _stageStatus = STAGE_FREEZE;
     setTimeout(function(){
-      _stageStatus = STAGE_PLAYING;
       _drawEndingFrame = 0;
+      _meltingDownNum = 0;
+      _stageStatus = STAGE_PLAYING;
     },_freezeTime);
   }
   
@@ -1035,7 +1037,11 @@ var dreamSpring = dreamSpring || new function(){
   function initCanvas(){
     _canvas = d3.select("body").append("canvas");
     if (spwCheck.isTouch) {
-        new FastClick(_canvas);
+        if ('addEventListener' in document) {
+          document.addEventListener('DOMContentLoaded', function() {
+            FastClick.attach(document.body);
+          }, false);
+        }
     }
     _this.context = _canvas.node().getContext("2d");
     _this.setBackResource();
