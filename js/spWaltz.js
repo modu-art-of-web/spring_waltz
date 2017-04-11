@@ -740,7 +740,10 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     _audioVis = new Audio("resources/audios/spring_waltz.mp3");
     _audioVis.addEventListener("ended",function() {
       console.log('audio ended');
-      _stageStatus = STAGE_ENDING;
+      if(_stageStatus !== STAGE_ENDING){
+        spwVo.resample('random');
+      }
+      drawEnding();
     });
     if(spwCheck.isSafari){
       setTimeout(function(){
