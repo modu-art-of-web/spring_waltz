@@ -247,7 +247,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       STAGE_FREEZE = 2,
       STAGE_PLAYING = 3,
       STAGE_ENDING = 4,
-      _endMeltingAvg = 0.75,
+      _endMeltingAvg = 0.25,
       _drawEndingFrame = 0,
       _endingStep = [5,8,13],
       _stageStatus = STAGE_INIT,  //0 init, 1 ready, 2 playing, 3 done
@@ -419,7 +419,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     }else if(_stageStatus === STAGE_READY){
       drawReady();
     }else{
-      if(_nextBackLoading) return;
+      // if(_nextBackLoading) return;
       if(_stageStatus === STAGE_FREEZE){
         if(spwVo.triPlayIndex !== null){
           var cen = spwUtils.getCenterAll(spwVo.triangles[spwVo.triPlayIndex]);
@@ -822,6 +822,7 @@ var dreamSpring = dreamSpring || new function(){
       _mouseholding = false,
       _imgTotal = 12,
       _imgNum = 0,
+      _imgPreNum = 0,
       _imgArr = [],
       _imgPath = '',
       _video = null,
@@ -845,11 +846,21 @@ var dreamSpring = dreamSpring || new function(){
     }
     
   }
+  function preLoad(){
+    if(typeof _imgArr[_imgPreNum] === 'undefined') return;
+    var img=new Image();
+    img.src='resources/imgs/spw'+_imgArr[_imgPreNum]+'.jpg';
+    console.log('_imgPreNum : ' + _imgPreNum);
+    console.log('_imgArr[_imgPreNum] : ' + _imgArr[_imgPreNum]);
+    _imgPreNum++;
+    img.onload = preLoad;
+  }
   function randomBackInti(){
     for(var i=1; i <= _imgTotal; i++){
       _imgArr.push(i);
     };
     _imgArr = shuffle(_imgArr);
+    preLoad(0);
   }
   function shuffle(array) {
     var currentIndex = array.length, temporaryValue, randomIndex;
