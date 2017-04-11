@@ -738,6 +738,10 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   function audioInit(){
     // _audioVis = document.getElementById('theAudio');
     _audioVis = new Audio("resources/audios/spring_waltz.mp3");
+    _audioVis.addEventListener("ended",function() {
+      console.log('audio ended');
+      _stageStatus = STAGE_ENDING;
+    });
     if(spwCheck.isSafari){
       setTimeout(function(){
         audioLoaded();
@@ -748,15 +752,15 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         audioLoaded();
       }else{
         _audioVis.addEventListener('loadeddata', function() {
-          // console.log('loadeddata');
+          console.log('loadeddata');
           // audioLoaded();
         }, false);
         _audioVis.addEventListener('canplay', function() {
-          // console.log('canplay');
+          console.log('canplay');
           // audioLoaded();
         }, false);
         _audioVis.addEventListener('canplaythrough', function() {
-          // console.log('canplaythrough');
+          console.log('canplaythrough');
           audioLoaded();
         }, false);
 
@@ -932,7 +936,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   function resetBackres(back){
     _backRes = back;
     spwVo.resample('replay');
-    animationPlay();
+    startFreeze();
   }
   function init(){
     // not fb,tw,kakao inapp
@@ -1005,10 +1009,10 @@ var dreamSpring = dreamSpring || new function(){
   }
   function initImage(){
     //remove video dom
-    var videoWrap = document.getElementById("sp_fullscreen_video");
-    if(videoWrap){
-      videoWrap.parentNode.removeChild(videoWrap);
-    };
+    // var videoWrap = document.getElementById("sp_fullscreen_video");
+    // if(videoWrap){
+    //   videoWrap.parentNode.removeChild(videoWrap);
+    // };
     _this.backRes = new Image;
     _this.backRes.resType = 'image';
     _imgPath = 'resources/imgs/spw'+Math.floor(Math.random()* _imgNum + 1) +'.jpg';
