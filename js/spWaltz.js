@@ -291,6 +291,8 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   }
 
   function audioUpdate(){
+    console.log('Uint8Array : ' + (Uint8Array));
+    console.log('_analyser.frequencyBinCount : ' + (_analyser.frequencyBinCount));
     var uintFrequencyData = new Uint8Array(_analyser.frequencyBinCount);
     // var timeFrequencyData = new Uint8Array(_analyser.fftSize);
     // app.animationFrame = (window.requestAnimationFrame || window.webkitRequestAnimationFrame)(app.animate);
