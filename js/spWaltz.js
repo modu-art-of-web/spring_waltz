@@ -235,6 +235,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       _height = h,
       _canvasCen = [w/2, h/2],
       _backRes = back,
+      _nextBackLoading = false,
       _audioVis = '',
       _analyser = '',
       _audioEnded = false,
@@ -246,7 +247,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       STAGE_FREEZE = 2,
       STAGE_PLAYING = 3,
       STAGE_ENDING = 4,
-      _endMeltingAvg = 0.25,
+      _endMeltingAvg = 0.75,
       _drawEndingFrame = 0,
       _endingStep = [5,8,13],
       _stageStatus = STAGE_INIT,  //0 init, 1 ready, 2 playing, 3 done
@@ -418,6 +419,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     }else if(_stageStatus === STAGE_READY){
       drawReady();
     }else{
+      if(_nextBackLoading) return;
       if(_stageStatus === STAGE_FREEZE){
         if(spwVo.triPlayIndex !== null){
           var cen = spwUtils.getCenterAll(spwVo.triangles[spwVo.triPlayIndex]);
@@ -781,6 +783,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
           _audioVis.play();
         }
         _averageMeting = 0;
+        _nextBackLoading = true;
         dreamSpring.setBackResource(resetBackres);
       }
     }
@@ -789,6 +792,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   function resetBackres(back){
     _backRes = back;
     spwVo.resample('replay');
+    _nextBackLoading = false;
     startFreeze();
   }
   function init(){
