@@ -1101,7 +1101,12 @@ var dreamSpring = dreamSpring || new function(){
       if(videoWrap){
         videoWrap.parentNode.removeChild(videoWrap);
       };
-    };
+    }else{
+      if(!_isMobile){
+        var videoWrap = document.getElementById("theVideo");
+        videoWrap.play();
+      }
+    }
     if(_isSupport){
       
       initCanvas();
