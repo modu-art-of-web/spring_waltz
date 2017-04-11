@@ -623,7 +623,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   function drawEnding(){
 
     
-
+    console.log('drawEnding');
     var topology = spwUtils.computeTopology(spwVo.voronoi(spwVo.samples));
     var geo = topology.objects.voronoi.geometries;
     var limitX = _width * 0.1;
@@ -738,13 +738,13 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   function audioInit(){
     // _audioVis = document.getElementById('theAudio');
     _audioVis = new Audio("resources/audios/spring_waltz.mp3");
-    _audioVis.addEventListener("ended",function() {
-      console.log('audio ended');
-      if(_stageStatus !== STAGE_ENDING){
-        spwVo.resample('random');
-      }
-      drawEnding();
-    });
+    // _audioVis.addEventListener("ended",function() {
+    //   console.log('audio ended');
+    //   if(_stageStatus !== STAGE_ENDING){
+    //     spwVo.resample('random');
+    //   }
+    //   drawEnding();
+    // });
     if(spwCheck.isSafari){
       setTimeout(function(){
         audioLoaded();
