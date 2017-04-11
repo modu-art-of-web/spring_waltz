@@ -358,7 +358,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     _fNow = Date.now();
     _fDelta = _fNow - _fThen;
     if (_fDelta > _fInterval) {
-      if(_backRes.currentTime !== 0){
+      if(typeof _backRes.currentTime === 'undefined' || _backRes.currentTime !== 0){
         _fThen = _fNow - (_fDelta % _fInterval);
         if(_stageStatus === STAGE_PLAYING){
           _diagFind = spwVo.meltAtPos(_curMouse[0],_curMouse[1],50,_meltRatio['mousemove']);
@@ -367,6 +367,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
           }
         };
         draw();
+
       }
     };
   };
@@ -434,6 +435,8 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   function draw(){
     spwDraw.drawImageProp(_context, _backRes, 0, 0, _width, _height);
     _imageData = _context.getImageData(0, 0, _width, _height);
+
+
 
     // console.log('draw _stageStatus : '  + _stageStatus);
     if(_stageStatus === STAGE_INIT){
@@ -734,7 +737,8 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   
   function audioInit(){
     if(!spwCheck.isFbInApp){
-      _audioVis = document.getElementById('theAudio');
+      // _audioVis = document.getElementById('theAudio');
+      _audioVis = new Audio("resources/audios/spring_waltz.mp3");
       if(spwCheck.isSafari){
         setTimeout(function(){
           audioLoaded();
@@ -745,15 +749,15 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
           audioLoaded();
         }else{
           _audioVis.addEventListener('loadeddata', function() {
-            alert('loadeddata');
+            console.log('loadeddata');
             // audioLoaded();
           }, false);
           _audioVis.addEventListener('canplay', function() {
-            alert('canplay');
+            console.log('canplay');
             // audioLoaded();
           }, false);
           _audioVis.addEventListener('canplaythrough', function() {
-            alert('canplaythrough');
+            console.log('canplaythrough');
             audioLoaded();
           }, false);
 

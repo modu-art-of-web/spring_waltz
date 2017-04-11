@@ -236,8 +236,11 @@ var spwUtils = spwUtils || function() {
           };
         });
       },
-      renderMultiPolygon : function (context, polygon, width, height, trans = 0) {
+      renderMultiPolygon : function (context, polygon, width, height, trans) {
         var that = this;
+        if(typeof trans === 'undefined' || trans === null){
+          trans = 0;
+        }; 
         var padX = trans;
         var padY = trans;
         
