@@ -14,18 +14,19 @@ var spwCheck = new function(){
     
     // _this.isMobile = Modernizr.touchevents;
     
-    // alert('_this.isMobile : ' + _this.isMobile);
-    // alert('Modernizr.audio : ' + Modernizr.audio);
-    // alert('Modernizr.audiopreload : ' + Modernizr.audiopreload);
-    // alert('Modernizr.canvas : ' + Modernizr.canvas);
-    // alert('Modernizr.canvastext : ' + Modernizr.canvastext);
-    // alert('Modernizr.touchevents : ' + Modernizr.touchevents);
-    // alert('Modernizr.video : ' + Modernizr.video);
-    // alert('Modernizr.videoautoplay : ' + Modernizr.videoautoplay);
-    // alert('Modernizr.videocrossorigin : ' + Modernizr.videocrossorigin);
-    // alert('Modernizr.videoloop : ' + Modernizr.videoloop);
-    // alert('Modernizr.videopreload : ' + Modernizr.videopreload);
-    // alert('Modernizr.webaudio : ' + Modernizr.webaudio);
+    console.log('_this.isMobile : ' + _this.isMobile);
+    console.log('Modernizr.audio : ' + Modernizr.audio);
+    console.log('Modernizr.audiopreload : ' + Modernizr.audiopreload);
+    console.log('Modernizr.canvas : ' + Modernizr.canvas);
+    console.log('Modernizr.canvastext : ' + Modernizr.canvastext);
+    console.log('Modernizr.touchevents : ' + Modernizr.touchevents);
+    console.log('Modernizr.video : ' + Modernizr.video);
+    console.log('Modernizr.videoautoplay : ' + Modernizr.videoautoplay);
+    console.log('Modernizr.videocrossorigin : ' + Modernizr.videocrossorigin);
+    console.log('Modernizr.videoloop : ' + Modernizr.videoloop);
+    console.log('Modernizr.videopreload : ' + Modernizr.videopreload);
+    _this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    console.log('_this.audioCtx : ' + _this.audioCtx);
 
     _this.videoAutoPlay = Modernizr.videoautoplay;
     _this.checkVendor = true;
@@ -48,6 +49,6 @@ var spwCheck = new function(){
     _this.isInApp = _this.isFbInApp || _this.isKakaoInApp || _this.isTwInApp;
     _this.isSafari = /Safari/.test(navigator.userAgent) && /Apple Computer/.test(navigator.vendor);
     // _this.isSafari = false;
-    // alert('_this.isSafari : ' + _this.isSafari);
-    // alert('_this.isFbInApp : ' + _this.isFbInApp);
+    console.log('_this.isSafari : ' + _this.isSafari);
+    console.log('_this.isFbInApp : ' + _this.isFbInApp);
 }

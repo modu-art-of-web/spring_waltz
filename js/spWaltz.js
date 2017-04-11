@@ -936,7 +936,8 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         console.log('replay');
         if(_audioEnded){
           _audioVis.ctx.currentTime = 0;
-        }
+          _audioVis.play();
+        };
         _averageMeting = 0;
         dreamSpring.setBackResource(resetBackres);
       }
