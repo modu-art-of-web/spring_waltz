@@ -362,7 +362,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         _fThen = _fNow - (_fDelta % _fInterval);
         if(_stageStatus === STAGE_PLAYING){
           _diagFind = spwVo.meltAtPos(_curMouse[0],_curMouse[1],50,_meltRatio['mousemove']);
-          if(!spwCheck.isFbInApp){
+          if(!spwCheck.isInApp){
             audioUpdate();
           }
         };
@@ -736,7 +736,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   
   
   function audioInit(){
-    if(!spwCheck.isFbInApp){
+    if(!spwCheck.isInApp){
       // _audioVis = document.getElementById('theAudio');
       _audioVis = new Audio("resources/audios/spring_waltz.mp3");
       if(spwCheck.isSafari){
@@ -749,15 +749,15 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
           audioLoaded();
         }else{
           _audioVis.addEventListener('loadeddata', function() {
-            console.log('loadeddata');
+            // console.log('loadeddata');
             // audioLoaded();
           }, false);
           _audioVis.addEventListener('canplay', function() {
-            console.log('canplay');
+            // console.log('canplay');
             // audioLoaded();
           }, false);
           _audioVis.addEventListener('canplaythrough', function() {
-            console.log('canplaythrough');
+            // console.log('canplaythrough');
             audioLoaded();
           }, false);
 
@@ -772,7 +772,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   };
   function audioLoaded(){
     _stageStatus = STAGE_READY;
-    if(!spwCheck.isFbInApp){
+    if(!spwCheck.isInApp){
       _audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
       var source = _audioVis.ctx.createMediaElementSource(_audioVis); // creates audio source
       _analyser = _audioVis.ctx.createAnalyser(); // creates analyserNode
@@ -793,7 +793,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   }
   function startAudio(){
     // _this.audioVis.play();
-    if(!spwCheck.isFbInApp){
+    if(!spwCheck.isInApp){
       _audioVis.play();
     }
     // _audioVis.start ? _audioVis.start(_audioVis.request.response) : _audioVis.noteOn(_audioVis.request.response);
@@ -981,7 +981,7 @@ var dreamSpring = dreamSpring || new function(){
 
   var _isSupport = spwCheck.checkVendor,
       _isMobile = spwCheck.isMobile,
-      _isFbInApp = spwCheck.isFbInApp,
+      _isInApp = spwCheck.isInApp,
       // _isMobile = true,
       _mouseholding = true,
       _imgNum = 12,
@@ -1095,6 +1095,13 @@ var dreamSpring = dreamSpring || new function(){
   };
   
   _this.init = function(){
+    //inapp이라면 video 삭제
+    if(_isInApp){
+      var videoWrap = document.getElementById("sp_fullscreen_video");
+      if(videoWrap){
+        videoWrap.parentNode.removeChild(videoWrap);
+      };
+    };
     if(_isSupport){
       
       initCanvas();

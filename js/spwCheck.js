@@ -40,8 +40,11 @@ var spwCheck = new function(){
         _this.checkVendor = false;
     };
 
-    alert('ua : ' + ua);
+    
     _this.isFbInApp = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1);
+    _this.isKakaoInApp = (ua.indexOf("KAKAOTALK") > -1) || (ua.indexOf("KakaoTalk") > -1);
+    _this.isTwInApp = (ua.indexOf("Twitter") > -1) || (ua.indexOf("twitter") > -1);
+    _this.isInApp = _this.isFbInApp || _this.isKakaoInApp || _this.isTwInApp;
     _this.isSafari = /Safari/.test(navigator.userAgent) && /Apple Computer/.test(navigator.vendor);
     // _this.isSafari = false;
     // alert('_this.isSafari : ' + _this.isSafari);
