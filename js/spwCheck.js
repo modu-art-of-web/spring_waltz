@@ -26,7 +26,7 @@ var spwCheck = new function(){
     console.log('Modernizr.videoloop : ' + Modernizr.videoloop);
     console.log('Modernizr.videopreload : ' + Modernizr.videopreload);
     _this.audioCtx = window.AudioContext || window.webkitAudioContext;
-    console.log('_this.audioCtx : ' + _this.audioCtx);
+    alert('_this.audioCtx : ' + _this.audioCtx);
 
     _this.videoAutoPlay = Modernizr.videoautoplay;
     _this.checkVendor = true;
