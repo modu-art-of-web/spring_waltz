@@ -292,34 +292,31 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   }
 
   function audioUpdate(){
-    console.log('typeof Uint8Array : ' + (typeof Uint8Array));
-    console.log('typeof Float32Array : ' + (typeof Float32Array));
-    console.log('Uint8Array : ' + (Uint8Array));
-    console.log('_analyser.frequencyBinCount : ' + (_analyser.frequencyBinCount));
-    // var uintFrequencyData = new Uint8Array(_analyser.frequencyBinCount);
-    // // var timeFrequencyData = new Uint8Array(_analyser.fftSize);
-    // // app.animationFrame = (window.requestAnimationFrame || window.webkitRequestAnimationFrame)(app.animate);
-    // // stats.begin();
-    // var array = _analyser.getByteFrequencyData(uintFrequencyData);
-    // // _analyser.getByteTimeDomainData(timeFrequencyData);
-    // var step = Math.round(uintFrequencyData.length / 60);
-    // var perAngle = 360 / step;
-    // for (var i = 0; i <= 60; i++){
-    //   var value = uintFrequencyData[i * step] / 4;
-    //   // console.log('value : ' + value);
-    //   // particle = particles[i++];
-    //   // particle.position.y = (uintFrequencyData[i] + 80);
-    //   // particle.material.color.setRGB(1,1 - uintFrequencyData[i]/255,1);
-    //   particle = spwVo.samples[i++];
-    //   particle[0] = _curMouse[0] + Math.sin(perAngle*i) * (value*5);
-    //   particle[1] = _curMouse[1] + Math.cos(perAngle*i) * (value*5);
-    //   var mel = 0.5;
-    //   if(_curMouseEvent === 'mousehold'){
-    //     mel = 0.8;
-    //   }
-    //   particle.melting = mel;
-    //   // particle.musics = true;
-    // }
+
+    var uintFrequencyData = new Uint8Array(_analyser.frequencyBinCount);
+    // var timeFrequencyData = new Uint8Array(_analyser.fftSize);
+    // app.animationFrame = (window.requestAnimationFrame || window.webkitRequestAnimationFrame)(app.animate);
+    // stats.begin();
+    var array = _analyser.getByteFrequencyData(uintFrequencyData);
+    // _analyser.getByteTimeDomainData(timeFrequencyData);
+    var step = Math.round(uintFrequencyData.length / 60);
+    var perAngle = 360 / step;
+    for (var i = 0; i <= 60; i++){
+      var value = uintFrequencyData[i * step] / 4;
+      // console.log('value : ' + value);
+      // particle = particles[i++];
+      // particle.position.y = (uintFrequencyData[i] + 80);
+      // particle.material.color.setRGB(1,1 - uintFrequencyData[i]/255,1);
+      particle = spwVo.samples[i++];
+      particle[0] = _curMouse[0] + Math.sin(perAngle*i) * (value*5);
+      particle[1] = _curMouse[1] + Math.cos(perAngle*i) * (value*5);
+      var mel = 0.5;
+      if(_curMouseEvent === 'mousehold'){
+        mel = 0.8;
+      }
+      particle.melting = mel;
+      // particle.musics = true;
+    }
     
     // _audioData.forEach(function(b, i){
     //     spwVo.samples.push([
@@ -367,7 +364,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         _fThen = _fNow - (_fDelta % _fInterval);
         if(_stageStatus === STAGE_PLAYING){
           _diagFind = spwVo.meltAtPos(_curMouse[0],_curMouse[1],50,_meltRatio['mousemove']);
-          if(!spwCheck.isInApp){
+          if(spwCheck.audioCtx && !spwCheck.isInApp){
             audioUpdate();
           }
         };
@@ -777,22 +774,24 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   function audioLoaded(){
     _stageStatus = STAGE_READY;
 
-    // _audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
-    // var source = _audioVis.ctx.createMediaElementSource(_audioVis); // creates audio source
-    // _analyser = _audioVis.ctx.createAnalyser(); // creates analyserNode
-    // source.connect(_audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
-    // source.connect(_analyser); // connects the analyser node to the audioNode and the audioDestinationNode
-    // _audioVis.node.onaudioprocess = function () {
-    //     var array = new Uint8Array(_audioVis.analyser.frequencyBinCount);
-    //     _audioVis.analyser.getByteFrequencyData(array);
-    //     var step = Math.round(array.length / _audioVis.numberOfBars);
+    if(spwCheck.audioCtx){
+      _audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
+      var source = _audioVis.ctx.createMediaElementSource(_audioVis); // creates audio source
+      _analyser = _audioVis.ctx.createAnalyser(); // creates analyserNode
+      source.connect(_audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
+      source.connect(_analyser); // connects the analyser node to the audioNode and the audioDestinationNode
+      // _audioVis.node.onaudioprocess = function () {
+      //     var array = new Uint8Array(_audioVis.analyser.frequencyBinCount);
+      //     _audioVis.analyser.getByteFrequencyData(array);
+      //     var step = Math.round(array.length / _audioVis.numberOfBars);
 
-    //     //Iterate through the bars and scale the z axis
-    //     for (var i = 0; i < _audioVis.numberOfBars; i++) {
-    //         var value = array[i * step] / 4;
-    //         _audioData[i] = value;
-    //     }
-    // }
+      //     //Iterate through the bars and scale the z axis
+      //     for (var i = 0; i < _audioVis.numberOfBars; i++) {
+      //         var value = array[i * step] / 4;
+      //         _audioData[i] = value;
+      //     }
+      // }
+    }
   }
   function startPlay(){
     // _this.audioVis.play();
@@ -935,7 +934,9 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       }else if(isReplay(m)){
         console.log('replay');
         if(_audioEnded){
-          _audioVis.ctx.currentTime = 0;
+          if(spwCheck.audioCtx){
+            _audioVis.ctx.currentTime = 0;
+          };
           _audioVis.play();
         }
         _averageMeting = 0;
