@@ -213,11 +213,6 @@ var spwVoronoi = function(w, h, sampleType, playBtnRadius){
         return samp; 
       });
     
-    }else if(sampleType === 'ending'){
-
-      // samples = d3.range(num).map(function(d) { return [Math.floor(Math.random() * (w + 1)), Math.floor(Math.random() * (h + 1))]; });
-      // var cen = [w/2, h/2];
-      // samples.push(cen);
     }else if(sampleType === 'replay'){
       samples = addOutsideSampleing(_this.samples);
     }
@@ -251,11 +246,13 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       STAGE_FREEZE = 2,
       STAGE_PLAYING = 3,
       STAGE_ENDING = 4,
-      _endMeltingAvg = 0.75,
+      _endMeltingAvg = 0.25,
       _drawEndingFrame = 0,
       _endingStep = [5,8,13],
       _stageStatus = STAGE_INIT,  //0 init, 1 ready, 2 playing, 3 done
       _playBtnRadius = (_width*0.1) > 60 ? 60 : _width*0.1,
+      _playBtnAngle = 0,
+      _playBtnMouseDown = false,
       _fNow = 0,
       _fThen = Date.now(),
       _fps = 30,                  /* 30 ms */
@@ -286,10 +283,6 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       _fbPosCen = [ (_fbPos[0] + _iconW/2), (_fbPos[1] + _iconH/2)],
       _twPosCen = [ (_twPos[0] + _iconW/2), (_twPos[1] + _iconH/2)];
       _authorLinkSize = [110 , 30];
-
-  function setup(){
-
-  }
 
   function audioUpdate(){
 
@@ -411,36 +404,15 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     _context.fillStyle = rgba + "";
     _context.strokeStyle =  "rgba(255,255,255,0.8)";
     spwDraw.drawCell(spwVo.triangles[spwVo.triPlayIndex]);
+    _context.lineWidth = 3;
     _context.stroke();
     _context.fill();
     _context.closePath();
-
-    // spwVo.triangles.forEach(function(t, i){
-    //   _context.beginPath();
-    //   var cen = spwUtils.getCenterAll(t);
-    //   var x = Math.floor(cen[0]);
-    //   var y = Math.floor(cen[1]);
-    //   var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
-    //   rgba.opacity = 0.6;
-    //   _context.fillStyle = rgba + "";
-    //   if(i === spwVo.triPlayIndex){
-    //     rgba.opacity = 0.9;
-    //     _context.fillStyle =  "red";
-    //   }
-    //   _context.strokeStyle =  "rgba(255,255,255,0)";
-    //   spwDraw.drawCell(t);
-    //   _context.stroke();
-    //   _context.fill();
-    //   _context.closePath();
-    // });
   }
   function draw(){
     spwDraw.drawImageProp(_context, _backRes, 0, 0, _width, _height);
     _imageData = _context.getImageData(0, 0, _width, _height);
 
-
-    console.log('draw : ' + _stageStatus);
-    // console.log('draw _stageStatus : '  + _stageStatus);
     if(_stageStatus === STAGE_INIT){
       drawLoading();
     }else if(_stageStatus === STAGE_READY){
@@ -459,20 +431,9 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
           _context.stroke();
           _context.fill();
           _context.closePath();
-          // if(Math.random() < .1){
-          //   _freezeRatio += _freezeRatio;
-          // }
         }
       }else{
-        
-        // console.log('_audioVis.audioContext.currentTime : ' + _audioVis.audioContext.currentTime);
-        // console.log('_audioVis.sourceBuffer.buffer.duration : ' + _audioVis.sourceBuffer.buffer.duration);
-        // if(_audioVis.audioContext.currentTime > _audioVis.sourceBuffer.buffer.duration ){
-        //   if(_stageStatus !== STAGE_ENDING){
-        //     spwVo.resample('random');
-        //   }
-        //   drawEnding();
-        // }
+
         spwVo.triangles = spwVo.voronoi(spwVo.samples.filter(function(s, i) {
           if(typeof s.musics !== 'undefined'){
             spwVo.samples.splice(i,1);
@@ -489,29 +450,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         })).triangles();
       }
       
-      // console.log('_averageMeting : ' + _averageMeting);
       if(_averageMeting < _endMeltingAvg){
-
-        // spwVo.polygons.forEach(function(p, i){
-        //   _context.beginPath();
-        //   if(typeof p === 'undefined' || typeof p.data === 'undefined' ){
-          
-        //   }else{
-        //     x = Math.floor(p.data[0]),
-        //     y = Math.floor(p.data[1]);
-        //   }
-        //   if(i > 0){
-        //     var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
-        //     rgba.opacity = 1;
-        //     _context.fillStyle =  rgba + "";
-        //   }else{
-        //     _context.fillStyle =  "red";
-        //   }
-          
-        //   spwDraw.drawCell(p);
-        //   _context.fill();
-        //   _context.closePath();
-        // });
 
         var totalMelting = 0;
         spwVo.triangles.forEach(function(t, i){
@@ -521,9 +460,6 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
           var x = Math.floor(cen[0]);
           var y = Math.floor(cen[1]);
           var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
-          // rgba.r = '255';
-          // rgba.g = '255';
-          // rgba.b = '255';
           
           if(_stageStatus === STAGE_FREEZE){
             
@@ -542,22 +478,10 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
             var meltingAver = 0;
 
             t.forEach(function(ts, j){
-              // if(ts.melting > 0.6){
-              //   // console.log('down : ' + ts);
-              //   var downSamp = [ts[0], ts[1]];
-              //   downSamp.melting = 0;
-              //   downSamp.down = true;
-              //   spwVo.samples.push(downSamp);
-              // };
-              // if(typeof ts.down !== 'undefined'){
-              //   console.log('down : ' + ts);
-              //   ts[1] += 10;
-              // };
               meltingAver += ts.melting;
-
             });
             meltingAver = meltingAver / 3;
-            // console.log('_meltingDownNum : ' + _meltingDownNum);
+
             if(_meltingDownLimit > _meltingDownNum && meltingAver > 0.4 && meltingAver < 0.8){
               console.log('DOWN');
               var downSamp = [x, y];
@@ -583,7 +507,6 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
           _context.closePath();
         });
         _averageMeting = totalMelting / spwVo.triangles.length;
-        // console.log('_averageMeting : ' + _averageMeting);
       }else{
         if(_stageStatus !== STAGE_ENDING){
           spwVo.resample('random');
@@ -591,36 +514,6 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         drawEnding();
       }
     }
-   
-
-    // 사이트
-    // spwVo.samples.forEach(function(s, i){
-    //   _context.beginPath();
-    //   spwDraw.drawSite(s);
-    //   if(typeof s.playbtn === 'undefined'){
-    //     _context.fillStyle = "black";
-    //     _context.strokeStyle = "yellow";
-    //   }else{
-    //     _context.fillStyle = "red";
-    //     _context.strokeStyle = "white";
-    //   }
-    //   _context.font = "15px Julius Sans One,sans-serif, Arial";
-    //   _context.fillStyle = 'red';
-    //   _context.textAlign = 'center';
-    //   _context.fillText(i,s[0],s[1]);
-
-    //   _context.fill();
-    //   _context.stroke();
-    //   _context.closePath();
-    // });
-
-    // if(_stageStatus === STAGE_PLAYING){
-    //   startMelt();
-    // }else if(_stageStatus === STAGE_INIT || _stageStatus === STAGE_READY){
-    //   startFreeze();
-    // }else if(_stageStatus === STAGE_ENDING){
-
-    // };
   }
   function drawEnding(){
 
@@ -637,9 +530,6 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       var x = d.data[0];
       var y = d.data[1];
       var endingBox = ( x > limitX && x < (_width - limitX) && y > limitY && y < (_height - limitY));
-      // if(!endingBox){
-      //     nextPolygons.push([d.cellIndex, spwUtils.getDistance([_width/2,_height/2], [x,y])]);
-      // };
       return endingBox;
     }));
 
@@ -715,8 +605,6 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
             avrRgb.a = opa;
             _context.textAlign = 'center';
             _context.fillText('Voices Of Spring Waltz',_width/2,_height/2);
-            // _context.font = "16px Julius Sans One,sans-serif, Arial";
-            // _context.fillText('- Johann Strauss Jr.',_width/2,_height/2 + 23);
 
             _context.font = "16px Julius Sans One,sans-serif, Arial";
             _context.beginPath();
@@ -738,7 +626,6 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   
   
   function audioInit(){
-    // _audioVis = document.getElementById('theAudio');
     _audioVis = new Audio("resources/audios/spring_waltz.mp3");
     _audioVis.addEventListener("ended",function() {
       console.log('audio ended');
@@ -774,31 +661,18 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   function audioLoaded(){
     _stageStatus = STAGE_READY;
 
-    if(spwCheck.audioCtx){
+    if(spwCheck.audioCtx && typeof _audioVis.ctx === 'undefined'){
       _audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
       var source = _audioVis.ctx.createMediaElementSource(_audioVis); // creates audio source
       _analyser = _audioVis.ctx.createAnalyser(); // creates analyserNode
       source.connect(_audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
       source.connect(_analyser); // connects the analyser node to the audioNode and the audioDestinationNode
-      // _audioVis.node.onaudioprocess = function () {
-      //     var array = new Uint8Array(_audioVis.analyser.frequencyBinCount);
-      //     _audioVis.analyser.getByteFrequencyData(array);
-      //     var step = Math.round(array.length / _audioVis.numberOfBars);
-
-      //     //Iterate through the bars and scale the z axis
-      //     for (var i = 0; i < _audioVis.numberOfBars; i++) {
-      //         var value = array[i * step] / 4;
-      //         _audioData[i] = value;
-      //     }
-      // }
     }
   }
   function startPlay(){
-    // _this.audioVis.play();
     if(!spwCheck.isInApp){
       _audioVis.play();
     };
-    // _audioVis.start ? _audioVis.start(_audioVis.request.response) : _audioVis.noteOn(_audioVis.request.response);
     setTimeout(function(){
       startFreeze();
     }, 1500);
@@ -812,65 +686,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       _stageStatus = STAGE_PLAYING;
     },_freezeTime);
   }
-  
-  // function startMelt(){
 
-  // }
-  // function startFreeze(){
-
-  //   // triangles 
-  //   spwVo.triangles.forEach(function(t, i){
-  //     _context.beginPath();
-  //     var cen = spwUtils.getCenterAll(t);
-  //     var x = Math.floor(cen[0]);
-  //     var y = Math.floor(cen[1]);
-  //     var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
-  //     rgba.opacity = 0.6;
-  //     _context.fillStyle = rgba + "";
-  //     // triangles 중 처음 10개 중에 가운데 playbtn을 검사한다.
-  //     if(i < 10 && isPlayBtnPos([x,y])){
-  //       rgba.opacity = 0.9;
-  //       _context.fillStyle =  "red";
-  //     }
-      
-  //     _context.strokeStyle =  "rgba(255,255,255,0)";
-  //     spwDraw.drawCell(t);
-  //     _context.stroke();
-  //     _context.fill();
-  //     _context.closePath();
-  //   });
-
-  //   // polygones
-  //   // spwVo.polygons.forEach(function(p, i){
-  //   //   _context.beginPath();
-  //   //   if(typeof p === 'undefined' || typeof p.data === 'undefined' ){
-      
-  //   //   }else{
-  //   //     x = Math.floor(p.data[0]),
-  //   //     y = Math.floor(p.data[1]);
-  //   //   }
-
-  //   //   var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
-  //   //   rgba.opacity = 0.6;
-
-  //   //   _context.fillStyle =  rgba + "";
-  //   //   spwDraw.drawCell(p);
-  //   //   _context.fill();
-  //   //   _context.closePath();
-  //   // });
-
-  //   // 사이트
-  //   // spwVo.samples.forEach(function(s, i){
-  //   //   _context.beginPath();
-  //   //   spwDraw.drawSite(s);
-  //   //   _context.fillStyle = "black";
-  //   //   _context.strokeStyle = "yellow";
-  //   //   _context.fill();
-  //   //   _context.stroke();
-  //   //   _context.closePath();
-  //   // });
-  // }
-  
   function resize(w,h){
     _width = w;
     _height = h;
@@ -879,6 +695,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     _fbPos = [ _width - _iconW * 1.5, 10];
     _twPos = [ _width - _iconW * 2.8, 10];
     _imageData = _context.getImageData(0, 0, _width, _height);
+    _playBtnRadius = (_width*0.1) > 60 ? 60 : _width*0.1;
     var type = 'poisson';
     if(_stageStatus === STAGE_ENDING){
       type = 'random';
@@ -901,27 +718,51 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   function isAuthorPos(pos){
     return ((pos[0] > _width/2 - _authorLinkSize[0]/2) && (pos[0] < _width/2 + _authorLinkSize[0]/2) && pos[1] > _height/2 + 9 && pos[1] < _height/2 + _authorLinkSize[1]);
   }
+  function reactPlayBtn(mark){
+    var moveR = mark * _playBtnRadius / 10;
+    spwVo.triangles[spwVo.triPlayIndex].forEach(function(t,i){
+      if(i === 0){
+        t[0] -= moveR;
+        t[1] -= moveR;  
+      }else if(i === 1){
+        t[0] -= moveR;
+        t[1] += moveR;
+      }else if(i === 2){
+        t[0] += moveR;
+      }
+    });
+  }
   function userEvent(type, m){
-
     if(_stageStatus === STAGE_PLAYING){
       _curMouseEvent = type;
       _diagFind = spwVo.meltAtPos(m[0],m[1],50,_meltRatio[type]);
-    }else if(_stageStatus === STAGE_READY && isPlayBtnPos(m)){
-      if(type === 'mousemove'){
-        // spwVo.triangles[spwVo.triPlayIndex][0][0] += 1;
-        // spwVo.triangles[spwVo.triPlayIndex][0][1] += 1;
-        console.log('mousemove');
-      }else if(type === 'mousedown'){
-        // spwVo.triangles[spwVo.triPlayIndex][0][0] += 5;
-        // spwVo.triangles[spwVo.triPlayIndex][0][1] += 5;
-        // spwVo.triangles[spwVo.triPlayIndex][1][0] += 5;
-        // spwVo.triangles[spwVo.triPlayIndex][1][1] -= 5;
-        // spwVo.triangles[spwVo.triPlayIndex][2][0] -= 5;
-        // spwVo.triangles[spwVo.triPlayIndex][2][1] += 0;
-        console.log('mousedown');
-      }else if(type === 'mouseup'){
-        console.log('mouseup');
-        startPlay();
+    }else if(_stageStatus === STAGE_READY){
+      if(isPlayBtnPos(m)){
+        if(type === 'mousemove'){
+          console.log('mosemove');
+          if(!_playBtnMouseDown){
+            _playBtnAngle += 0.5;
+            spwVo.triangles[spwVo.triPlayIndex].forEach(function(t,i){
+              t[0] += Math.sin(_playBtnAngle) * _playBtnRadius/20;
+              t[1] += Math.cos(_playBtnAngle) * _playBtnRadius/20;
+            })
+          }
+        }else if(type === 'mousedown'){
+          console.log('mousedown');
+          _playBtnMouseDown = true;
+          reactPlayBtn(-1);
+          
+        }else if(type === 'mouseup'){
+          console.log('mouseup');
+          reactPlayBtn(1);
+          startPlay();
+        }
+      }else{
+        if(_playBtnMouseDown && type === 'mouseup'){
+          console.log('mouseup others');
+          _playBtnMouseDown = false;
+          reactPlayBtn(1);
+        }
       }
       
     }else if(_stageStatus === STAGE_ENDING && type === 'mouseup'){
@@ -960,27 +801,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     spwDraw.context = _context;
     spwVo = new spwVoronoi(_width, _height, 'poisson', _playBtnRadius);
     update();
-    // =============================================================
-    // init voronoi
-    // start freeze
-
-    // setup()
-    // play -> start audio
-
-    // update()
-    // draw()
-
-    // if audio end OR melting ratio over 90%
-    // done screen
-
-    // =============================================================
-    // replay to init voronoi
-    // init();
-    // startfreeze();
-    // if(play){
-    //   setup();
-    //   update();
-    // };
+    
   };
   return {
     init : init,
@@ -994,16 +815,17 @@ var dreamSpring = dreamSpring || new function(){
 
   var _isSupport = spwCheck.checkVendor,
       _isMobile = spwCheck.isMobile,
-      // _isInApp = spwCheck.isInApp,
-      _videoAutoPlay = spwCheck.videoAutoPlay,
-      // _isMobile = true,
-      _mouseholding = true,
-      _imgNum = 12,
+      _mouseholding = false,
+      _imgTotal = 12,
+      _imgNum = 0,
+      _imgArr = [],
       _imgPath = '',
+      _video = null,
       _mouseTimeOut,
       _springWaltz = null,
       _canvas, 
       _this = this;
+
 
   _this.width, _this.height, _this.context, _this.backRes;
 
@@ -1019,47 +841,65 @@ var dreamSpring = dreamSpring || new function(){
     }
     
   }
+  function randomBackInti(){
+    for(var i=1; i <= _imgTotal; i++){
+      _imgArr.push(i);
+    };
+    _imgArr = shuffle(_imgArr);
+  }
+  function shuffle(array) {
+    var currentIndex = array.length, temporaryValue, randomIndex;
+
+    // While there remain elements to shuffle...
+    while (0 !== currentIndex) {
+
+      // Pick a remaining element...
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex -= 1;
+
+      // And swap it with the current element.
+      temporaryValue = array[currentIndex];
+      array[currentIndex] = array[randomIndex];
+      array[randomIndex] = temporaryValue;
+    }
+
+    return array;
+  }
   function initImage(){
-    //remove video dom
-    // var videoWrap = document.getElementById("sp_fullscreen_video");
-    // if(videoWrap){
-    //   videoWrap.parentNode.removeChild(videoWrap);
-    // };
     _this.backRes = new Image;
     _this.backRes.resType = 'image';
-    _imgPath = 'resources/imgs/spw'+Math.floor(Math.random()* _imgNum + 1) +'.jpg';
+    
+    if(_imgArr.length <= _imgNum || typeof _imgArr[_imgNum] === 'undefined'){
+      _imgNum = 0;
+    };
+
+    _imgPath = 'resources/imgs/spw'+_imgArr[_imgNum]+'.jpg';
+    _imgNum++;
     _this.backRes.src = _imgPath;
     _this.backRes.onload = startSpringWalts;
   };
   function initVideo(){
-
-    var video = document.createElement('video');
-    video.src = 'resources/it-was-all-yellow/MP4/it-was-all-yellow.mp4';
-    // if(_videoAutoPlay){
-    //   video.autoPlay = true;
-    // };
-    video.play();
-    _this.backRes = video;
+    if(_video === null){
+      _video = document.createElement('video');  
+    }else{
+      initImage();
+      return;
+    }
+    _video.src = 'resources/videos/spw1.mp4';
+    _video.muted = true;
+    if(spwCheck.videoLoop){
+      _video.loop = true;
+    }
+    _video.play();
+    _this.backRes = _video;
     _this.backRes.resType = 'video';
-    if(typeof video.readyState !== 'undefined' && video.readyState > 3 ) {
+    if(typeof _video.readyState !== 'undefined' && _video.readyState > 3 ) {
       startSpringWalts();
     }else{
-      video.addEventListener('loadeddata', function() {
+      _video.addEventListener('loadeddata', function() {
         startSpringWalts();
       });
     }
-    // load video
-    // var video = document.getElementById("theVideo");
-    // _this.backRes = video;
-    // _this.backRes.resType = 'video';
-    // // video.play();
-    // if(typeof video.readyState !== 'undefined' && video.readyState > 3 ) {
-    //   startSpringWalts();
-    // }else{
-    //   video.addEventListener('loadeddata', function() {
-    //     startSpringWalts();
-    //   });
-    // }
   };
   _this.setBackResource = function(){
     if(_isMobile){
@@ -1125,20 +965,8 @@ var dreamSpring = dreamSpring || new function(){
   };
   
   _this.init = function(){
-    //inapp이라면 video 삭제
-    // if(_isInApp){
-    //   var videoWrap = document.getElementById("sp_fullscreen_video");
-    //   if(videoWrap){
-    //     videoWrap.parentNode.removeChild(videoWrap);
-    //   };
-    // }else{
-    //   if(!_isMobile){
-    //     var videoWrap = document.getElementById("theVideo");
-    //     videoWrap.play();
-    //   }
-    // }
     if(_isSupport){
-      
+      randomBackInti();
       initCanvas();
       window.onresize = windowResize;
     }else{

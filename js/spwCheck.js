@@ -31,6 +31,7 @@ var spwCheck = new function(){
     // console.log('_this.audioCtx : ' + _this.audioCtx);
 
     _this.videoAutoPlay = Modernizr.videoautoplay;
+    _this.videoLoop = Modernizr.videoloop;
     _this.checkVendor = true;
     //audio-audioloop-audiopreload-canvas-canvastext-touchevents-video-videoautoplay-videocrossorigin-c-videopreload-webaudio
     if (!Modernizr.csstransforms3d || !Modernizr.canvas || !Modernizr.canvastext) {
