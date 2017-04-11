@@ -437,7 +437,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     _imageData = _context.getImageData(0, 0, _width, _height);
 
 
-
+    console.log('draw : ' + _stageStatus);
     // console.log('draw _stageStatus : '  + _stageStatus);
     if(_stageStatus === STAGE_INIT){
       drawLoading();
@@ -623,11 +623,11 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   function drawEnding(){
 
     
-    console.log('drawEnding');
+    console.log('drawEnding')
     var topology = spwUtils.computeTopology(spwVo.voronoi(spwVo.samples));
     var geo = topology.objects.voronoi.geometries;
     var limitX = _width * 0.1;
-    if(spwUtils.isMobile) limitX = _width * 0.01;
+    if(spwUtils.isMobile) limitX = _width * 0.005;
     var limitY = _height * 0.25;
     var nextPolygons = [];
 
@@ -673,7 +673,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       geoMerge.coordinates.forEach(function(polygon) {
         polygon.forEach(function(ring, i) {
           _context.beginPath();
-          spwUtils.renderSinglePolygon(_context, ring, _width, _height);
+          spwUtils.renderSinglePolygon(_context, ring, _width, _height, 0);
           var strokeOpa = _drawEndingFrame / _endingStep[1] - 1;
           var fillOpa = strokeOpa > 0.7 ? 0.7 : strokeOpa;
           _context.fillStyle = "rgba(255,255,255,"+fillOpa+")";
@@ -738,13 +738,13 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   function audioInit(){
     // _audioVis = document.getElementById('theAudio');
     _audioVis = new Audio("resources/audios/spring_waltz.mp3");
-    // _audioVis.addEventListener("ended",function() {
-    //   console.log('audio ended');
-    //   if(_stageStatus !== STAGE_ENDING){
-    //     spwVo.resample('random');
-    //   }
-    //   drawEnding();
-    // });
+    _audioVis.addEventListener("ended",function() {
+      console.log('audio ended');
+      if(_stageStatus !== STAGE_ENDING){
+        spwVo.resample('random');
+      }
+      drawEnding();
+    });
     if(spwCheck.isSafari){
       setTimeout(function(){
         audioLoaded();
