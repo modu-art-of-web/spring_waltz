@@ -777,11 +777,11 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   function audioLoaded(){
     _stageStatus = STAGE_READY;
 
-    _audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
-    var source = _audioVis.ctx.createMediaElementSource(_audioVis); // creates audio source
-    _analyser = _audioVis.ctx.createAnalyser(); // creates analyserNode
-    source.connect(_audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
-    source.connect(_analyser); // connects the analyser node to the audioNode and the audioDestinationNode
+    // _audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
+    // var source = _audioVis.ctx.createMediaElementSource(_audioVis); // creates audio source
+    // _analyser = _audioVis.ctx.createAnalyser(); // creates analyserNode
+    // source.connect(_audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
+    // source.connect(_analyser); // connects the analyser node to the audioNode and the audioDestinationNode
     // _audioVis.node.onaudioprocess = function () {
     //     var array = new Uint8Array(_audioVis.analyser.frequencyBinCount);
     //     _audioVis.analyser.getByteFrequencyData(array);
@@ -937,7 +937,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         if(_audioEnded){
           _audioVis.ctx.currentTime = 0;
           _audioVis.play();
-        };
+        }
         _averageMeting = 0;
         dreamSpring.setBackResource(resetBackres);
       }

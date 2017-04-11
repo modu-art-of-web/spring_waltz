@@ -25,7 +25,7 @@ var spwCheck = new function(){
     console.log('Modernizr.videocrossorigin : ' + Modernizr.videocrossorigin);
     console.log('Modernizr.videoloop : ' + Modernizr.videoloop);
     console.log('Modernizr.videopreload : ' + Modernizr.videopreload);
-    _this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    _this.audioCtx = window.AudioContext || window.webkitAudioContext;
     console.log('_this.audioCtx : ' + _this.audioCtx);
 
     _this.videoAutoPlay = Modernizr.videoautoplay;
