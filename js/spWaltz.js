@@ -736,49 +736,41 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   
   
   function audioInit(){
-    if(!spwCheck.isInApp){
-      // _audioVis = document.getElementById('theAudio');
-      _audioVis = new Audio("resources/audios/spring_waltz.mp3");
-      if(spwCheck.isSafari){
-        setTimeout(function(){
-          audioLoaded();
-        }, 3000);
-      }else{
-        if(typeof _audioVis.readyState !== 'undefined' && _audioVis.readyState > 3 ) {
-          console.log('audio ready');
-          audioLoaded();
-        }else{
-          _audioVis.addEventListener('loadeddata', function() {
-            // console.log('loadeddata');
-            // audioLoaded();
-          }, false);
-          _audioVis.addEventListener('canplay', function() {
-            // console.log('canplay');
-            // audioLoaded();
-          }, false);
-          _audioVis.addEventListener('canplaythrough', function() {
-            // console.log('canplaythrough');
-            audioLoaded();
-          }, false);
-
-        };
-      }
+    // _audioVis = document.getElementById('theAudio');
+    _audioVis = new Audio("resources/audios/spring_waltz.mp3");
+    if(spwCheck.isSafari){
+      setTimeout(function(){
+        audioLoaded();
+      }, 3000);
     }else{
-      audioLoaded();
+      if(typeof _audioVis.readyState !== 'undefined' && _audioVis.readyState > 3 ) {
+        console.log('audio ready');
+        audioLoaded();
+      }else{
+        _audioVis.addEventListener('loadeddata', function() {
+          // console.log('loadeddata');
+          // audioLoaded();
+        }, false);
+        _audioVis.addEventListener('canplay', function() {
+          // console.log('canplay');
+          // audioLoaded();
+        }, false);
+        _audioVis.addEventListener('canplaythrough', function() {
+          // console.log('canplaythrough');
+          audioLoaded();
+        }, false);
+
+      };
     }
-    
-    
-    
   };
   function audioLoaded(){
     _stageStatus = STAGE_READY;
-    if(!spwCheck.isInApp){
-      _audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
-      var source = _audioVis.ctx.createMediaElementSource(_audioVis); // creates audio source
-      _analyser = _audioVis.ctx.createAnalyser(); // creates analyserNode
-      source.connect(_audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
-      source.connect(_analyser); // connects the analyser node to the audioNode and the audioDestinationNode
-    }
+
+    _audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
+    var source = _audioVis.ctx.createMediaElementSource(_audioVis); // creates audio source
+    _analyser = _audioVis.ctx.createAnalyser(); // creates analyserNode
+    source.connect(_audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
+    source.connect(_analyser); // connects the analyser node to the audioNode and the audioDestinationNode
     // _audioVis.node.onaudioprocess = function () {
     //     var array = new Uint8Array(_audioVis.analyser.frequencyBinCount);
     //     _audioVis.analyser.getByteFrequencyData(array);
@@ -791,17 +783,17 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     //     }
     // }
   }
-  function startAudio(){
+  function startPlay(){
     // _this.audioVis.play();
     if(!spwCheck.isInApp){
       _audioVis.play();
-    }
+    };
     // _audioVis.start ? _audioVis.start(_audioVis.request.response) : _audioVis.noteOn(_audioVis.request.response);
     setTimeout(function(){
-      animationPlay();
+      startFreeze();
     }, 1500);
   }
-  function animationPlay(){
+  function startFreeze(){
     
     _stageStatus = STAGE_FREEZE;
     setTimeout(function(){
@@ -919,7 +911,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         console.log('mousedown');
       }else if(type === 'mouseup'){
         console.log('mouseup');
-        startAudio();
+        startPlay();
       }
       
     }else if(_stageStatus === STAGE_ENDING && type === 'mouseup'){
@@ -943,7 +935,10 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     animationPlay();
   }
   function init(){
-    audioInit();
+    // not fb,tw,kakao inapp
+    if(!spwCheck.isInApp){
+      audioInit();
+    };
     spwDraw.context = _context;
     spwVo = new spwVoronoi(_width, _height, 'poisson', _playBtnRadius);
     update();
@@ -981,7 +976,8 @@ var dreamSpring = dreamSpring || new function(){
 
   var _isSupport = spwCheck.checkVendor,
       _isMobile = spwCheck.isMobile,
-      _isInApp = spwCheck.isInApp,
+      // _isInApp = spwCheck.isInApp,
+      _videoAutoPlay = spwCheck.videoAutoPlay,
       // _isMobile = true,
       _mouseholding = true,
       _imgNum = 12,
@@ -1018,11 +1014,15 @@ var dreamSpring = dreamSpring || new function(){
     _this.backRes.onload = startSpringWalts;
   };
   function initVideo(){
-    // load video
-    var video = document.getElementById("theVideo");
+
+    var video = document.createElement('video');
+    video.src = 'resources/it-was-all-yellow/MP4/it-was-all-yellow.mp4';
+    // if(_videoAutoPlay){
+    //   video.autoPlay = true;
+    // };
+    video.play();
     _this.backRes = video;
     _this.backRes.resType = 'video';
-    // video.play();
     if(typeof video.readyState !== 'undefined' && video.readyState > 3 ) {
       startSpringWalts();
     }else{
@@ -1030,6 +1030,18 @@ var dreamSpring = dreamSpring || new function(){
         startSpringWalts();
       });
     }
+    // load video
+    // var video = document.getElementById("theVideo");
+    // _this.backRes = video;
+    // _this.backRes.resType = 'video';
+    // // video.play();
+    // if(typeof video.readyState !== 'undefined' && video.readyState > 3 ) {
+    //   startSpringWalts();
+    // }else{
+    //   video.addEventListener('loadeddata', function() {
+    //     startSpringWalts();
+    //   });
+    // }
   };
   _this.setBackResource = function(){
     if(_isMobile){
@@ -1096,17 +1108,17 @@ var dreamSpring = dreamSpring || new function(){
   
   _this.init = function(){
     //inapp이라면 video 삭제
-    if(_isInApp){
-      var videoWrap = document.getElementById("sp_fullscreen_video");
-      if(videoWrap){
-        videoWrap.parentNode.removeChild(videoWrap);
-      };
-    }else{
-      if(!_isMobile){
-        var videoWrap = document.getElementById("theVideo");
-        videoWrap.play();
-      }
-    }
+    // if(_isInApp){
+    //   var videoWrap = document.getElementById("sp_fullscreen_video");
+    //   if(videoWrap){
+    //     videoWrap.parentNode.removeChild(videoWrap);
+    //   };
+    // }else{
+    //   if(!_isMobile){
+    //     var videoWrap = document.getElementById("theVideo");
+    //     videoWrap.play();
+    //   }
+    // }
     if(_isSupport){
       
       initCanvas();

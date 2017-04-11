@@ -27,6 +27,7 @@ var spwCheck = new function(){
     // alert('Modernizr.videopreload : ' + Modernizr.videopreload);
     // alert('Modernizr.webaudio : ' + Modernizr.webaudio);
 
+    _this.videoAutoPlay = Modernizr.videoautoplay;
     _this.checkVendor = true;
     //audio-audioloop-audiopreload-canvas-canvastext-touchevents-video-videoautoplay-videocrossorigin-c-videopreload-webaudio
     if (!Modernizr.canvas || !Modernizr.canvastext) {
