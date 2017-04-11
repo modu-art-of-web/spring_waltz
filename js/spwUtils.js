@@ -215,11 +215,13 @@ var spwUtils = spwUtils || function() {
           });
         });
       },
-      renderSinglePolygon : function (context, ring, width, height, trans = 0) {
+      renderSinglePolygon : function (context, ring, width, height, trans) {
         var that = this;
         var padX = trans;
         var padY = trans;
-
+        if(typeof trans === 'undefined' || trans === null){
+          trans = 0;
+        }; 
         ring.forEach(function(point, i) {
           if(trans !== 0){
             if(point[0] === 0 || point[0] === width){
