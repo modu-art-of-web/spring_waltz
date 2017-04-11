@@ -20,6 +20,7 @@ var spwCheck = new function(){
     // console.log('Modernizr.canvas : ' + Modernizr.canvas);
     // console.log('Modernizr.canvastext : ' + Modernizr.canvastext);
     // console.log('Modernizr.csstransforms : ' + Modernizr.csstransforms);
+    // console.log('Modernizr.csstransforms3d : ' + Modernizr.csstransforms3d);
     // console.log('Modernizr.touchevents : ' + Modernizr.touchevents);
     // console.log('Modernizr.video : ' + Modernizr.video);
     // console.log('Modernizr.videoautoplay : ' + Modernizr.videoautoplay);
@@ -32,7 +33,7 @@ var spwCheck = new function(){
     _this.videoAutoPlay = Modernizr.videoautoplay;
     _this.checkVendor = true;
     //audio-audioloop-audiopreload-canvas-canvastext-touchevents-video-videoautoplay-videocrossorigin-c-videopreload-webaudio
-    if (!Modernizr.csstransforms || !Modernizr.canvas || !Modernizr.canvastext) {
+    if (!Modernizr.csstransforms3d || !Modernizr.canvas || !Modernizr.canvastext) {
         _this.vendor = "";
     } else {
         var styles = window.getComputedStyle(document.documentElement, '');
