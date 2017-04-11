@@ -938,7 +938,9 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     // not fb,tw,kakao inapp
     if(!spwCheck.isInApp){
       audioInit();
-    };
+    }else{
+      _stageStatus = STAGE_READY;
+    }
     spwDraw.context = _context;
     spwVo = new spwVoronoi(_width, _height, 'poisson', _playBtnRadius);
     update();
