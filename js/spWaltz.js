@@ -1,7 +1,7 @@
-// window.onerror = function(msg, url, linenumber) {
-//     alert('Error message: '+msg+'\nURL: '+url+'\nLine Number: '+linenumber);
-//     return true;
-// }
+window.onerror = function(msg, url, linenumber) {
+    alert('Error message: '+msg+'\nURL: '+url+'\nLine Number: '+linenumber);
+    return true;
+}
 
 var spwDraw = spwDraw || {
   context : [],
@@ -162,6 +162,8 @@ var spwVoronoi = function(w, h, sampleType, playBtnRadius){
       var wsh = [dotsW*i, h];
       wsd.melting = defMelt;
       wsh.melting = defMelt;
+      wsd.outside = true;
+      wsh.outside = true;
       samples.push(wsd);
       samples.push(wsh);
     };
@@ -170,6 +172,8 @@ var spwVoronoi = function(w, h, sampleType, playBtnRadius){
       var wsh = [w, dotsH*i];
       wsd.melting = defMelt;
       wsh.melting = defMelt;
+      wsd.outside = true;
+      wsh.outside = true;
       samples.push(wsd);
       samples.push(wsh);
     };
@@ -205,7 +209,7 @@ var spwVoronoi = function(w, h, sampleType, playBtnRadius){
 
       samples = addOutsideSampleing(samples);
     }else if(sampleType === 'random'){
-      var sampleNum = Math.floor(w / 10);
+      var sampleNum = Math.floor(w / 5);
       
       samples = d3.range(sampleNum).map(function(d, a, b, c, d) { 
         var samp = [Math.floor(Math.random() * (w + 1)), Math.floor(Math.random() * (h + 1))];
@@ -245,8 +249,9 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       STAGE_INIT = 0,
       STAGE_READY = 1,
       STAGE_FREEZE = 2,
-      STAGE_PLAYING = 3,
-      STAGE_ENDING = 4,
+      STAGE_GUIDE = 3,
+      STAGE_PLAYING = 4,
+      STAGE_ENDING = 5,
       _endMeltingAvg = 0.75,
       _drawEndingFrame = 0,
       _endingStep = [5,8,13],
@@ -283,7 +288,9 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       _twPos = [ _width - _iconW * 2.8, 10],
       _fbPosCen = [ (_fbPos[0] + _iconW/2), (_fbPos[1] + _iconH/2)],
       _twPosCen = [ (_twPos[0] + _iconW/2), (_twPos[1] + _iconH/2)];
-      _authorLinkSize = [110 , 30];
+      _authorLinkSize = [110 , 80],
+      _authorHover = false,
+      _relplayHover = false;
 
   function audioUpdate(){
 
@@ -302,8 +309,8 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       // particle.position.y = (uintFrequencyData[i] + 80);
       // particle.material.color.setRGB(1,1 - uintFrequencyData[i]/255,1);
       particle = spwVo.samples[i++];
-      particle[0] = _curMouse[0] + Math.sin(perAngle*i) * (value*5);
-      particle[1] = _curMouse[1] + Math.cos(perAngle*i) * (value*5);
+      particle[0] = _curMouse[0] + Math.sin(perAngle*i) * (value*8);
+      particle[1] = _curMouse[1] + Math.cos(perAngle*i) * (value*8);
       var mel = 0.5;
       if(_curMouseEvent === 'mousehold'){
         mel = 0.8;
@@ -377,7 +384,9 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     _context.beginPath();
     _context.fillStyle =  loadColor;
     _context.lineWidth = 3;
-    spwDraw.drawCell(spwVo.triangles[spwVo.triPlayIndex]);
+    if(spwVo.triPlayIndex !== null){
+      spwDraw.drawCell(spwVo.triangles[spwVo.triPlayIndex]);
+    }
     _context.stroke();
     _context.fill();
     _context.closePath();
@@ -396,136 +405,236 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   }
   function drawReady(){
 
-    _context.beginPath();
-    var cen = spwUtils.getCenterAll(spwVo.triangles[spwVo.triPlayIndex]);
-    var x = Math.floor(cen[0]);
-    var y = Math.floor(cen[1]);
-    var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
-    rgba.opacity = 1;
-    _context.fillStyle = rgba + "";
-    _context.strokeStyle =  "rgba(255,255,255,0.8)";
-    spwDraw.drawCell(spwVo.triangles[spwVo.triPlayIndex]);
-    _context.lineWidth = 3;
-    _context.stroke();
-    _context.fill();
-    _context.closePath();
-  }
-  function draw(){
-    spwDraw.drawImageProp(_context, _backRes, 0, 0, _width, _height);
-    _imageData = _context.getImageData(0, 0, _width, _height);
-
-    if(_stageStatus === STAGE_INIT){
-      drawLoading();
-    }else if(_stageStatus === STAGE_READY){
-      drawReady();
-    }else{
-      // if(_nextBackLoading) return;
-      if(_stageStatus === STAGE_FREEZE){
+    spwVo.triangles.forEach(function(t, i){
+      _context.beginPath();
+      spwDraw.drawCell(t);
+      if(i !== spwVo.triPlayIndex){
+        _context.fillStyle = "rgba(255,255,255,0.8)";
+        var outside = false;
+        t.forEach(function(ts, j){
+          if(ts.outside) outside = true; 
+        });
+        _context.lineWidth = 1;
+        if(!outside){
+          _context.strokeStyle = "rgba(255,255,255,0)";
+        }else{
+          _context.strokeStyle = "rgba(255,255,255,0.3)";
+        };
+      }else{
         if(spwVo.triPlayIndex !== null){
           var cen = spwUtils.getCenterAll(spwVo.triangles[spwVo.triPlayIndex]);
           var x = Math.floor(cen[0]);
           var y = Math.floor(cen[1]);
           var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
-          _context.beginPath();
-          _context.fillStyle = rgba;
-          _context.strokeStyle =  "rgba(255,255,255,1)";
-          spwDraw.drawCell(spwVo.triangles[spwVo.triPlayIndex]);
-          _context.stroke();
-          _context.fill();
-          _context.closePath();
-        }
-      }else{
-
-        spwVo.triangles = spwVo.voronoi(spwVo.samples.filter(function(s, i) {
-          if(typeof s.musics !== 'undefined'){
-            spwVo.samples.splice(i,1);
-          };
-          if(typeof s.down !== 'undefined'){
-            s[1] += 10;
-            s.melting += 0.05;
-            if(s[1] > _height || s.melting > 0.8){
-              spwVo.samples.splice(i,1);
-              _meltingDownNum--;
-            };
-          };
-          return typeof s.melting !== 'undefined';
-        })).triangles();
-      }
-      
-      if(_averageMeting < _endMeltingAvg){
-
-        var totalMelting = 0;
-        spwVo.triangles.forEach(function(t, i){
-          
-          _context.beginPath();
-          var cen = spwUtils.getCenterAll(t);
-          var x = Math.floor(cen[0]);
-          var y = Math.floor(cen[1]);
-          var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
-          
-          if(_stageStatus === STAGE_FREEZE){
-            
-            if(typeof t.opacity === 'undefined'){
-              t.opacity = _freezeRatio;
-            }else{
-              if(!(i % Math.floor(Math.random()* 5) + 1)){
-                if(t.opacity < 0.7){
-                  t.opacity += t.opacity;
-                }
-              }
-            }
-          }
-          
-          if(_stageStatus === STAGE_PLAYING){
-            var meltingAver = 0;
-
-            t.forEach(function(ts, j){
-              meltingAver += ts.melting;
-            });
-            meltingAver = meltingAver / 3;
-
-            if(_meltingDownLimit > _meltingDownNum && meltingAver > 0.4 && meltingAver < 0.8){
-              console.log('DOWN');
-              var downSamp = [x, y];
-              downSamp.melting = 0;
-              downSamp.down = true;
-              downSamp.originY = y;
-              spwVo.samples.push(downSamp);
-              _meltingDownNum++;
-            };
-            meltingAver > 1 ? meltingAver = 1 : meltingAver = meltingAver;
-            t.opacity = 1 - meltingAver;
-            totalMelting += meltingAver;
-          };
-
-
-
-          rgba.opacity = t.opacity;
+          rgba.opacity = 1;
           _context.fillStyle = rgba + "";
-          _context.strokeStyle =  "rgba(255,255,255,0)";
-          spwDraw.drawCell(t);
-          _context.stroke();
-          _context.fill();
-          _context.closePath();
-        });
-        _averageMeting = totalMelting / spwVo.triangles.length;
-      }else{
-        if(_stageStatus !== STAGE_ENDING){
-          spwVo.resample('random');
+          _context.strokeStyle =  "rgba(255,255,255,0.8)";
+          _context.lineWidth = 3;
         }
-        drawEnding();
       }
+      _context.stroke();
+      _context.fill();
+      _context.closePath();
+    });
+
+    _context.beginPath();
+    _context.lineWidth = 1;
+    _context.font = "18px Julius Sans One,sans-serif, Arial";
+    _context.fillStyle = "gray";
+    _context.textAlign = 'center';
+    if(spwCheck.isMobile){
+      if(!spwCheck.isInApp){
+        _context.fillText('Turn up your speakers and',_width/2,_height/2 + _playBtnRadius * 1.8);
+      }
+      _context.fillText('play to dream of spring',_width/2,_height/2 + _playBtnRadius * 1.8 + 23);
+    }else{
+      _context.fillText('Turn up your speakers and play to dream of spring',_width/2,_height/2 + _playBtnRadius * 1.8);
+    }
+    _context.closePath();
+  }
+  function drawFreeze(){
+    if(spwVo.triPlayIndex !== null){
+      var cen = spwUtils.getCenterAll(spwVo.triangles[spwVo.triPlayIndex]);
+      var x = Math.floor(cen[0]);
+      var y = Math.floor(cen[1]);
+      var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
+      _context.beginPath();
+      _context.fillStyle = rgba;
+      _context.strokeStyle =  "rgba(255,255,255,1)";
+      spwDraw.drawCell(spwVo.triangles[spwVo.triPlayIndex]);
+      _context.stroke();
+      _context.fill();
+      _context.closePath();
+    }
+    spwVo.triangles.forEach(function(t, i){
+      
+      if(typeof t.opacity === 'undefined'){
+        t.opacity = _freezeRatio;
+        t.whiteOp = 0.8;
+      }else{
+        if(!(i % Math.floor(Math.random()* 5) + 1)){
+          if(t.opacity < 0.7){
+            t.opacity += t.opacity;
+          }
+          t.whiteOp -= 0.1;
+        }
+      }
+      _context.beginPath();
+      _context.fillStyle = "rgba(255,255,255,"+t.whiteOp+")";
+      _context.strokeStyle =  "rgba(255,255,255,0)";
+      spwDraw.drawCell(t);
+      _context.stroke();
+      _context.fill();
+      _context.closePath();
+
+      
+      var cen = spwUtils.getCenterAll(t);
+      var x = Math.floor(cen[0]);
+      var y = Math.floor(cen[1]);
+      var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
+      rgba.opacity = t.opacity;
+      _context.beginPath();
+      _context.fillStyle = rgba + "";
+      _context.strokeStyle =  "rgba(255,255,255,0)";
+      spwDraw.drawCell(t);
+      _context.stroke();
+      _context.fill();
+      _context.closePath();
+
+      
+      
+    });
+  }
+  function drawPlaying(){
+    spwVo.triangles = spwVo.voronoi(spwVo.samples.filter(function(s, i) {
+      if(typeof s.musics !== 'undefined'){
+        spwVo.samples.splice(i,1);
+      };
+      if(typeof s.flow !== 'undefined'){
+        s[1] += s.flow * 20;
+        s.melting += 0.05;
+        if(s[1] > _height || s.melting > 0.8){
+          spwVo.samples.splice(i,1);
+          _meltingDownNum--;
+        };
+      };
+      return typeof s.melting !== 'undefined';
+    })).triangles();
+
+    if(_averageMeting < _endMeltingAvg){
+
+      var totalMelting = 0;
+      spwVo.triangles.forEach(function(t, i){
+        
+        _context.beginPath();
+        var cen = spwUtils.getCenterAll(t);
+        var x = Math.floor(cen[0]);
+        var y = Math.floor(cen[1]);
+        var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
+        var meltingAver = 0;
+
+        t.forEach(function(ts, j){
+          meltingAver += ts.melting;
+        });
+        meltingAver = meltingAver / 3;
+
+        if(_meltingDownLimit > _meltingDownNum && meltingAver > 0.2 && meltingAver < 0.8){
+          console.log('DOWN');
+          var downSamp = [x, y];
+          downSamp.melting = 0;
+          downSamp.flow = meltingAver;
+          downSamp.originY = y;
+          spwVo.samples.push(downSamp);
+          _meltingDownNum++;
+        };
+        meltingAver > 1 ? meltingAver = 1 : meltingAver = meltingAver;
+        t.opacity = 1 - meltingAver;
+        totalMelting += meltingAver;
+        rgba.opacity = t.opacity;
+        _context.fillStyle = rgba + "";
+        _context.strokeStyle =  "rgba(255,255,255,0)";
+        spwDraw.drawCell(t);
+        _context.stroke();
+        _context.fill();
+        _context.closePath();
+      });
+      _averageMeting = totalMelting / spwVo.triangles.length;
+    }else{
+      if(_stageStatus !== STAGE_ENDING){
+        spwVo.resample('random');
+      }
+      drawEnding();
+    }
+  }
+  function drawGuide(){
+    spwVo.triangles.forEach(function(t, i){
+      _context.beginPath();
+      var cen = spwUtils.getCenterAll(t);
+      var x = Math.floor(cen[0]);
+      var y = Math.floor(cen[1]);
+      var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
+      rgba.opacity = t.opacity;
+      _context.fillStyle = rgba + "";
+      _context.strokeStyle =  "rgba(255,255,255,0)";
+      spwDraw.drawCell(t);
+      _context.stroke();
+      _context.fill();
+      _context.closePath();
+    });
+
+    _context.beginPath();
+    _context.rect(0,0,_width,_height);
+    _context.fillStyle = "rgba(0,0,0,0.8)";
+    _context.fill();
+    _context.closePath();
+
+    _context.beginPath();
+    _context.arc(_curMouse[0], _curMouse[1], 30, 0, 2 * Math.PI, false);
+    _context.fillStyle = "rgba(255,255,255,0.8)";
+    _context.fill();
+    _context.closePath();
+
+    _context.font = "23px Julius Sans One,sans-serif, Arial";
+    _context.fillStyle = "rgba(255,255,255,0.8)";
+    _context.textAlign = 'center';
+    if(spwCheck.isMobile){
+      _context.fillText('Melt all ice by moving. ',_curMouse[0],_curMouse[1]+70);
+      _context.fillText('Click and Hold is faster.',_curMouse[0],_curMouse[1]+93);
+    }else{
+      _context.fillText('Melt all ice by moving. Click and Hold is faster.',_curMouse[0],_curMouse[1]+70);
+    }
+    
+  }
+  function draw(){
+    spwDraw.drawImageProp(_context, _backRes, 0, 0, _width, _height);
+    _imageData = _context.getImageData(0, 0, _width, _height);
+
+    if(_stageStatus === STAGE_PLAYING){
+      drawPlaying();
+    }else if(_stageStatus === STAGE_FREEZE){
+      drawFreeze()
+    }else if(_stageStatus === STAGE_ENDING){
+      drawEnding()
+    }else if(_stageStatus === STAGE_INIT){
+      drawLoading();
+    }else if(_stageStatus === STAGE_READY){
+      drawReady();
+    }else if(_stageStatus === STAGE_GUIDE){
+      drawGuide();  //melting guide
     }
   }
   function drawEnding(){
 
-    
     console.log('drawEnding')
     var topology = spwUtils.computeTopology(spwVo.voronoi(spwVo.samples));
     var geo = topology.objects.voronoi.geometries;
     var limitX = _width * 0.1;
-    if(spwUtils.isMobile) limitX = _width * 0.005;
     var limitY = _height * 0.25;
+    if(spwUtils.isMobile){
+      limitX = -500;
+      limitY = _height * 0.1;
+    }
+    
     var nextPolygons = [];
 
     var geoMerge = topojson.merge(topology, geo.filter(function(d, i) { 
@@ -552,6 +661,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       _context.beginPath();
       var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
       rgba.opacity = _drawEndingFrame / _endingStep[0];
+      rgba.opacity = rgba.opacity > 0.8 ? 0.8 : rgba.opacity;
       _context.fillStyle =  rgba + "";
       spwDraw.drawCell(p);
       _context.fill();
@@ -579,13 +689,25 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
           _context.closePath();
 
           if(_drawEndingFrame / _endingStep[1] > 2){
+
+            
             var cen = [_width/2, _height/2 - _replayMarginBottom];
-            var triRadi = _replayRadi/6;
+            var devide = 6;
             var opa = _drawEndingFrame / _endingStep[2] - 2;
+            _imageData = _context.getImageData(0, 0, _width, _height);
+            var avrRgb = spwUtils.getAverageColourAsRGB(_imageData.data);
+            if(_relplayHover){
+              devide = 4;
+              _context.fillStyle = avrRgb + '';
+              _context.strokeStyle = avrRgb + '';
+            }else{
+              _context.fillStyle = "rgba(153,153,153,"+opa+")";
+              _context.strokeStyle = "rgba(153,153,153,"+opa+")";
+            }
+            var triRadi = _replayRadi/devide;
             _context.beginPath();
             _context.arc(cen[0], cen[1], _replayRadi, 0, 1.5 * Math.PI, false);
             _context.lineWidth = _replayRadi/5 > 6 ? 6 : _replayRadi/5;
-            _context.strokeStyle = "rgba(153,153,153,"+opa+")";
             _context.stroke();
             _context.closePath();
 
@@ -596,25 +718,30 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
             _context.moveTo(cen[0] - triRadi, cen[1] - triRadi * 2);
             _context.lineTo(cen[0] - triRadi, cen[1] + triRadi * 2);
             _context.lineTo(cen[0] + triRadi * 3 , cen[1]);
-            _context.fillStyle = "rgba(153,153,153,"+opa+")";
             _context.fill();
             _context.closePath();
 
-            _imageData = _context.getImageData(0, 0, _width, _height);
-            var avrRgb = spwUtils.getAverageColourAsRGB(_imageData.data);
+            
             _context.font = "23px Julius Sans One,sans-serif, Arial";
             _context.fillStyle = avrRgb + '';
-            avrRgb.a = opa;
+            _context.strokeStyle = "rgba(153,153,153,"+opa+")";
+            _context.fillStyle = "rgba(153,153,153,"+opa+")";
             _context.textAlign = 'center';
-            _context.fillText('Voices Of Spring Waltz',_width/2,_height/2);
-
+            _context.fillText("'Voices Of Spring Waltz'",_width/2,_height/2);
+            _context.textAlign = 'left';
             _context.font = "16px Julius Sans One,sans-serif, Arial";
+            _context.fillText('- Johann Strauss Jr.',_width/2,_height/2 + 25);
+
+            _context.textAlign = 'center';
+            if(_authorHover){
+              _context.fillStyle = avrRgb + '';
+              _context.strokeStyle = avrRgb + '';
+            };
+            _context.fillText('by Taejae Han',_width/2,_height/2 + 70);
             _context.beginPath();
-            _context.fillText('by Taejae Han',_width/2,_height/2 + 25);
             _context.moveTo(_width/2 - _authorLinkSize[0]/2 ,_height/2+ _authorLinkSize[1]);
             _context.lineTo(_width/2 + _authorLinkSize[0]/2,_height/2+ _authorLinkSize[1]);
             _context.lineWidth = 1;
-            _context.strokeStyle = avrRgb + '';
             _context.stroke();
             _context.closePath();
           }
@@ -675,17 +802,22 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     if(!spwCheck.isInApp){
       _audioVis.play();
     };
-    setTimeout(function(){
+    // setTimeout(function(){
       startFreeze();
-    }, 1500);
+    // }, 1500);
   }
-  function startFreeze(){
+  function startFreeze(isReplay){
     
     _stageStatus = STAGE_FREEZE;
     setTimeout(function(){
       _drawEndingFrame = 0;
       _meltingDownNum = 0;
-      _stageStatus = STAGE_PLAYING;
+      if(isReplay){
+        _stageStatus = STAGE_PLAYING;
+      }else{
+        _stageStatus = STAGE_GUIDE;
+      }
+      
     },_freezeTime);
   }
 
@@ -722,17 +854,19 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   }
   function reactPlayBtn(mark){
     var moveR = mark * _playBtnRadius / 10;
-    spwVo.triangles[spwVo.triPlayIndex].forEach(function(t,i){
-      if(i === 0){
-        t[0] -= moveR;
-        t[1] -= moveR;  
-      }else if(i === 1){
-        t[0] -= moveR;
-        t[1] += moveR;
-      }else if(i === 2){
-        t[0] += moveR;
-      }
-    });
+    if(spwVo.triPlayIndex !== null){
+      spwVo.triangles[spwVo.triPlayIndex].forEach(function(t,i){
+        if(i === 0){
+          t[0] -= moveR;
+          t[1] -= moveR;  
+        }else if(i === 1){
+          t[0] -= moveR;
+          t[1] += moveR;
+        }else if(i === 2){
+          t[0] += moveR;
+        }
+      });
+    }
   }
   function userEvent(type, m){
     if(_stageStatus === STAGE_PLAYING){
@@ -741,13 +875,15 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     }else if(_stageStatus === STAGE_READY){
       if(isPlayBtnPos(m)){
         if(type === 'mousemove'){
-          console.log('mosemove');
+          console.log('mousemove');
           if(!_playBtnMouseDown){
             _playBtnAngle += 0.5;
-            spwVo.triangles[spwVo.triPlayIndex].forEach(function(t,i){
-              t[0] += Math.sin(_playBtnAngle) * _playBtnRadius/20;
-              t[1] += Math.cos(_playBtnAngle) * _playBtnRadius/20;
-            })
+            if(spwVo.triPlayIndex !== null){
+              spwVo.triangles[spwVo.triPlayIndex].forEach(function(t,i){
+                t[0] += Math.sin(_playBtnAngle) * _playBtnRadius/20;
+                t[1] += Math.cos(_playBtnAngle) * _playBtnRadius/20;
+              })
+            }
           }
         }else if(type === 'mousedown'){
           console.log('mousedown');
@@ -767,25 +903,41 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         }
       }
       
-    }else if(_stageStatus === STAGE_ENDING && type === 'mouseup'){
-      if(isShareFbPos(m)){
-        window.open('http://www.facebook.com/sharer/sharer.php?u='+_spUrl);
-      }else if(isShareTwPos(m)){
-        window.open("https://twitter.com/share?url="+encodeURIComponent(_spUrl)+"&text="+document.title);
-      }else if(isAuthorPos(m)){
-        window.open("http://blog.taejaehan.com");
-      }else if(isReplay(m)){
-        console.log('replay');
-        if(_audioEnded){
-          if(spwCheck.audioCtx){
-            _audioVis.ctx.currentTime = 0;
-          };
-          _audioVis.play();
+    }else if(_stageStatus === STAGE_ENDING){
+      if(type === 'mouseup'){
+        if(isShareFbPos(m)){
+          window.open('http://www.facebook.com/sharer/sharer.php?u='+_spUrl);
+        }else if(isShareTwPos(m)){
+          window.open("https://twitter.com/share?url="+encodeURIComponent(_spUrl)+"&text="+document.title);
+        }else if(isAuthorPos(m)){
+          window.open("http://blog.taejaehan.com");
+        }else if(isReplay(m)){
+          console.log('replay');
+          if(_audioEnded){
+            if(spwCheck.audioCtx){
+              _audioVis.ctx.currentTime = 0;
+            };
+            _audioVis.play();
+          }
+          _averageMeting = 0;
+          _nextBackLoading = true;
+          dreamSpring.setBackResource(resetBackres);
         }
-        _averageMeting = 0;
-        _nextBackLoading = true;
-        dreamSpring.setBackResource(resetBackres);
+      }else if(type === 'mousemove'){
+        if(isAuthorPos(m)){
+          _authorHover = true;
+        }else if(isReplay(m)){
+          _relplayHover = true;
+        }else{
+          _authorHover = false;
+          _relplayHover = false;
+        }
+        console.log('_relplayHover : ' + _relplayHover);
+        console.log('_authorHover : ' + _authorHover);
       }
+      
+    }else if(_stageStatus === STAGE_GUIDE && type === 'mouseup'){
+      _stageStatus = STAGE_PLAYING;
     }
     _curMouse = m;
   }
@@ -793,7 +945,9 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     _backRes = back;
     spwVo.resample('replay');
     _nextBackLoading = false;
-    startFreeze();
+    _authorHover = false;
+    _relplayHover = false;
+    startFreeze(true);
   }
   function init(){
     // not fb,tw,kakao inapp
