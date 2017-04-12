@@ -560,6 +560,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     
   }
   function draw(){
+    console.log('_stageStatus : ' + _stageStatus);
     spwDraw.drawImageProp(_context, _backRes, 0, 0, _width, _height);
     _imageData = _context.getImageData(0, 0, _width, _height);
 
@@ -736,14 +737,15 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     }
   };
   function audioLoaded(){
-    _stageStatus = STAGE_READY;
-
-    if(spwCheck.audioCtx && typeof _audioVis.ctx === 'undefined'){
-      _audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
-      var source = _audioVis.ctx.createMediaElementSource(_audioVis); // creates audio source
-      _analyser = _audioVis.ctx.createAnalyser(); // creates analyserNode
-      source.connect(_audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
-      source.connect(_analyser); // connects the analyser node to the audioNode and the audioDestinationNode
+    if(_stageStatus < STAGE_READY){
+      _stageStatus = STAGE_READY;
+      if(spwCheck.audioCtx && typeof _audioVis.ctx === 'undefined'){
+        _audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
+        var source = _audioVis.ctx.createMediaElementSource(_audioVis); // creates audio source
+        _analyser = _audioVis.ctx.createAnalyser(); // creates analyserNode
+        source.connect(_audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
+        source.connect(_analyser); // connects the analyser node to the audioNode and the audioDestinationNode
+      }
     }
   }
   function startPlay(){
