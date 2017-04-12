@@ -11,29 +11,12 @@ var spwCheck = new function(){
             _this.isMobile = true;
         }
     })(ua);
-    
-    // _this.isMobile = Modernizr.touchevents;
-    
-    // console.log('_this.isMobile : ' + _this.isMobile);
-    // console.log('Modernizr.audio : ' + Modernizr.audio);
-    // console.log('Modernizr.audiopreload : ' + Modernizr.audiopreload);
-    // console.log('Modernizr.canvas : ' + Modernizr.canvas);
-    // console.log('Modernizr.canvastext : ' + Modernizr.canvastext);
-    // console.log('Modernizr.csstransforms : ' + Modernizr.csstransforms);
-    // console.log('Modernizr.csstransforms3d : ' + Modernizr.csstransforms3d);
-    // console.log('Modernizr.touchevents : ' + Modernizr.touchevents);
-    // console.log('Modernizr.video : ' + Modernizr.video);
-    // console.log('Modernizr.videoautoplay : ' + Modernizr.videoautoplay);
-    // console.log('Modernizr.videocrossorigin : ' + Modernizr.videocrossorigin);
-    // console.log('Modernizr.videoloop : ' + Modernizr.videoloop);
-    // console.log('Modernizr.videopreload : ' + Modernizr.videopreload);
+   
     _this.audioCtx = window.AudioContext || window.webkitAudioContext;
-    // console.log('_this.audioCtx : ' + _this.audioCtx);
 
     _this.videoAutoPlay = Modernizr.videoautoplay;
     _this.videoLoop = Modernizr.videoloop;
     _this.checkVendor = true;
-    //audio-audioloop-audiopreload-canvas-canvastext-touchevents-video-videoautoplay-videocrossorigin-c-videopreload-webaudio
     if (!Modernizr.csstransforms3d || !Modernizr.canvas || !Modernizr.canvastext) {
         _this.vendor = "";
     } else {
@@ -45,13 +28,9 @@ var spwCheck = new function(){
         _this.checkVendor = false;
     };
 
-    
     _this.isFbInApp = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1);
     _this.isKakaoInApp = (ua.indexOf("KAKAOTALK") > -1) || (ua.indexOf("KakaoTalk") > -1);
     _this.isTwInApp = (ua.indexOf("Twitter") > -1) || (ua.indexOf("twitter") > -1);
     _this.isInApp = !Modernizr.audio || _this.isFbInApp || _this.isKakaoInApp || _this.isTwInApp;
     _this.isSafari = /Safari/.test(navigator.userAgent) && /Apple Computer/.test(navigator.vendor);
-    // _this.isSafari = false;
-    // console.log('_this.isSafari : ' + _this.isSafari);
-    // console.log('_this.isFbInApp : ' + _this.isFbInApp);
 }

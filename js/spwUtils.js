@@ -2,8 +2,6 @@ var spwUtils = spwUtils || function() {
   return{
       // Based on https://www.jasondavies.com/poisson-disc/
       poissonDiscSampler : function(width, height, radius, playRadius) {
-        // width = width+ 500;
-        // height = height+ 500;
         var k = 30, // maximum number of samples before rejection
             radius2 = radius * radius,
             R = 3 * radius2,
@@ -180,12 +178,7 @@ var spwUtils = spwUtils || function() {
         b = Math.floor(b / (data.length / 4));
 
         return d3.rgb(r, g, b);
-        // return { r: r, g: g, b: b };
       },
-      // dsq:function(a,b) {
-      //     var dx = a[0]-b[0], dy = a[1]-b[1];
-      //     return dx*dx+dy*dy;
-      // },
       getDistance:function(a, b) {
         var dx = a[0] - b[0], dy = a[1] - b[1];
         return Math.sqrt(dx * dx + dy * dy);

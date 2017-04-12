@@ -295,19 +295,11 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   function audioUpdate(){
 
     var uintFrequencyData = new Uint8Array(_analyser.frequencyBinCount);
-    // var timeFrequencyData = new Uint8Array(_analyser.fftSize);
-    // app.animationFrame = (window.requestAnimationFrame || window.webkitRequestAnimationFrame)(app.animate);
-    // stats.begin();
     var array = _analyser.getByteFrequencyData(uintFrequencyData);
-    // _analyser.getByteTimeDomainData(timeFrequencyData);
     var step = Math.round(uintFrequencyData.length / 60);
     var perAngle = 360 / step;
     for (var i = 0; i <= 60; i++){
       var value = uintFrequencyData[i * step] / 4;
-      // console.log('value : ' + value);
-      // particle = particles[i++];
-      // particle.position.y = (uintFrequencyData[i] + 80);
-      // particle.material.color.setRGB(1,1 - uintFrequencyData[i]/255,1);
       particle = spwVo.samples[i++];
       particle[0] = _curMouse[0] + Math.sin(perAngle*i) * (value*8);
       particle[1] = _curMouse[1] + Math.cos(perAngle*i) * (value*8);
@@ -316,44 +308,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         mel = 0.8;
       }
       particle.melting = mel;
-      // particle.musics = true;
     }
-    
-    // _audioData.forEach(function(b, i){
-    //     spwVo.samples.push([
-    //       _curMouse[0] + Math.sin(perAngle*i) * (b*5)
-    //       ,_curMouse[1] + Math.cos(perAngle*i) * (b*5)
-    //     ]);
-    //     var mel = 0.5;
-    //     if(_curMouseEvent === 'mousehold'){
-    //       mel = 0.8;
-    //     }
-    //     spwVo.samples[spwVo.samples.length - 1].melting = mel;
-    //     spwVo.samples[spwVo.samples.length - 1].musics = true;
-    // });
-    // for (var j = 0; j <= 2048; j++){
-    //   console.log('timeFrequencyData[j] : ' + timeFrequencyData[j]);
-    //     // particle2 = particles2[j++];
-    //     // particle2.position.y = (timeFrequencyData[j]/1.5 - 85);
-    //     // particle2.material.color.setRGB(1,1 - timeFrequencyData[j]/375,1);
-    // }
-    // for (var k = 0; k <= 1024; k++){
-    //   console.log('uintFrequencyData[k] : ' + uintFrequencyData[k]);
-    //     // particle3 = particles3[k++];
-    //     // particle3.position.y = -(uintFrequencyData[k] + 80);
-    //     // particle3.material.color.setRGB(1,1 - (uintFrequencyData[k]/255),1);
-    // }
-    // _audioVis.node.onaudioprocess = function () {
-    //     var array = new Uint8Array(_audioVis.analyser.frequencyBinCount);
-    //     _audioVis.analyser.getByteFrequencyData(array);
-    //     var step = Math.round(array.length / _audioVis.numberOfBars);
-
-    //     //Iterate through the bars and scale the z axis
-    //     for (var i = 0; i < _audioVis.numberOfBars; i++) {
-    //         var value = array[i * step] / 4;
-    //         _audioData[i] = value;
-    //     }
-    // }
   }
   function update(){
     window.requestAnimationFrame(update);
@@ -539,7 +494,6 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         meltingAver = meltingAver / 3;
 
         if(_meltingDownLimit > _meltingDownNum && meltingAver > 0.2 && meltingAver < 0.8){
-          console.log('DOWN');
           var downSamp = [x, y];
           downSamp.melting = 0;
           downSamp.flow = meltingAver;
@@ -625,7 +579,6 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   }
   function drawEnding(){
 
-    console.log('drawEnding')
     var topology = spwUtils.computeTopology(spwVo.voronoi(spwVo.samples));
     var geo = topology.objects.voronoi.geometries;
     var limitX = _width * 0.1;
@@ -757,7 +710,6 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   function audioInit(){
     _audioVis = new Audio("resources/audios/spring_waltz.mp3");
     _audioVis.addEventListener("ended",function() {
-      console.log('audio ended');
       _audioEnded = true;
       // melted all
       _averageMeting = 1;
@@ -768,19 +720,15 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       }, 3000);
     }else{
       if(typeof _audioVis.readyState !== 'undefined' && _audioVis.readyState > 3 ) {
-        console.log('audio ready');
         audioLoaded();
       }else{
         _audioVis.addEventListener('loadeddata', function() {
-          console.log('loadeddata');
           // audioLoaded();
         }, false);
         _audioVis.addEventListener('canplay', function() {
-          console.log('canplay');
           // audioLoaded();
         }, false);
         _audioVis.addEventListener('canplaythrough', function() {
-          console.log('canplaythrough');
           audioLoaded();
         }, false);
 
@@ -875,7 +823,6 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     }else if(_stageStatus === STAGE_READY){
       if(isPlayBtnPos(m)){
         if(type === 'mousemove'){
-          console.log('mousemove');
           if(!_playBtnMouseDown){
             _playBtnAngle += 0.5;
             if(spwVo.triPlayIndex !== null){
@@ -886,18 +833,15 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
             }
           }
         }else if(type === 'mousedown'){
-          console.log('mousedown');
           _playBtnMouseDown = true;
           reactPlayBtn(-1);
           
         }else if(type === 'mouseup'){
-          console.log('mouseup');
           reactPlayBtn(1);
           startPlay();
         }
       }else{
         if(_playBtnMouseDown && type === 'mouseup'){
-          console.log('mouseup others');
           _playBtnMouseDown = false;
           reactPlayBtn(1);
         }
@@ -912,7 +856,6 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         }else if(isAuthorPos(m)){
           window.open("http://blog.taejaehan.com");
         }else if(isReplay(m)){
-          console.log('replay');
           if(_audioEnded){
             if(spwCheck.audioCtx){
               _audioVis.ctx.currentTime = 0;
@@ -932,8 +875,6 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
           _authorHover = false;
           _relplayHover = false;
         }
-        console.log('_relplayHover : ' + _relplayHover);
-        console.log('_authorHover : ' + _authorHover);
       }
       
     }else if(_stageStatus === STAGE_GUIDE && type === 'mouseup'){
@@ -1004,8 +945,6 @@ var dreamSpring = dreamSpring || new function(){
     if(typeof _imgArr[_imgPreNum] === 'undefined') return;
     var img=new Image();
     img.src='resources/imgs/spw'+_imgArr[_imgPreNum]+'.jpg';
-    console.log('_imgPreNum : ' + _imgPreNum);
-    console.log('_imgArr[_imgPreNum] : ' + _imgArr[_imgPreNum]);
     _imgPreNum++;
     img.onload = preLoad;
   }
