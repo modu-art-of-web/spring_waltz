@@ -401,9 +401,9 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       if(!spwCheck.isInApp){
         _context.fillText('Turn up your speakers and',_width/2,_height/2 + _playBtnRadius * 1.8);
       }
-      _context.fillText('play to dream of spring',_width/2,_height/2 + _playBtnRadius * 1.8 + 23);
+      _context.fillText('hit play to uncover spring',_width/2,_height/2 + _playBtnRadius * 1.8 + 23);
     }else{
-      _context.fillText('Turn up your speakers and play to dream of spring',_width/2,_height/2 + _playBtnRadius * 1.8);
+      _context.fillText('Turn up your speakers and hit play to uncover spring',_width/2,_height/2 + _playBtnRadius * 1.8);
     }
     _context.closePath();
   }
@@ -552,10 +552,10 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     _context.fillStyle = "rgba(255,255,255,0.8)";
     _context.textAlign = 'center';
     if(spwCheck.isMobile){
-      _context.fillText('Melt all ice by moving. ',_curMouse[0],_curMouse[1]+70);
-      _context.fillText('Click and Hold is faster.',_curMouse[0],_curMouse[1]+93);
+      _context.fillText('Move cursor to melt ice ',_curMouse[0],_curMouse[1]+70);
+      _context.fillText('Click and Hold to melt faster.',_curMouse[0],_curMouse[1]+93);
     }else{
-      _context.fillText('Melt all ice by moving. Click and Hold to melt it faster.',_curMouse[0],_curMouse[1]+70);
+      _context.fillText('Move cursor to melt ice Click and Hold to melt faster.',_curMouse[0],_curMouse[1]+70);
     }
     
   }
