@@ -555,7 +555,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       _context.fillText('Melt all ice by moving. ',_curMouse[0],_curMouse[1]+70);
       _context.fillText('Click and Hold is faster.',_curMouse[0],_curMouse[1]+93);
     }else{
-      _context.fillText('Melt all ice by moving. Click and Hold is faster.',_curMouse[0],_curMouse[1]+70);
+      _context.fillText('Melt all ice by moving. Click and Hold to melt it faster.',_curMouse[0],_curMouse[1]+70);
     }
     
   }
@@ -681,7 +681,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
             _context.strokeStyle = "rgba(153,153,153,"+opa+")";
             _context.fillStyle = "rgba(153,153,153,"+opa+")";
             _context.textAlign = 'center';
-            _context.fillText("'Voices of Spring Waltz'",_width/2,_height/2);
+            _context.fillText("'Voices Of Spring Waltz'",_width/2,_height/2);
             _context.textAlign = 'left';
             _context.font = "16px Julius Sans One,sans-serif, Arial";
             _context.fillText('- Johann Strauss Jr.',_width/2,_height/2 + 25);
