@@ -1,7 +1,7 @@
-window.onerror = function(msg, url, linenumber) {
-    alert('Error message: '+msg+'\nURL: '+url+'\nLine Number: '+linenumber);
-    return true;
-}
+// window.onerror = function(msg, url, linenumber) {
+//     alert('Error message: '+msg+'\nURL: '+url+'\nLine Number: '+linenumber);
+//     return true;
+// }
 
 var spwDraw = spwDraw || {
   context : [],
@@ -553,7 +553,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     _context.textAlign = 'center';
     if(spwCheck.isMobile){
       _context.fillText('Move cursor to melt ice ',_curMouse[0],_curMouse[1]+70);
-      _context.fillText('Click and Hold to melt faster.',_curMouse[0],_curMouse[1]+93);
+      // _context.fillText('Click and Hold to melt faster.',_curMouse[0],_curMouse[1]+93);
     }else{
       _context.fillText('Move cursor to melt ice Click and Hold to melt faster.',_curMouse[0],_curMouse[1]+70);
     }
