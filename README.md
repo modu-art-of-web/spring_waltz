@@ -2,6 +2,6 @@
 
 I made this interaction project after listening to classical music ‘Voices of Spring waltz’.
 
-<img src="springwaltz.taejaehan.com/resources/imgs/spw_share2.jpg" >
+<img src="http://springwaltz.taejaehan.com/resources/imgs/spw_share2.jpg" >
 
 <a href="http://springwaltz.taejaehan.com/">Spring Waltz</a>
