@@ -1040,7 +1040,9 @@ var dreamSpring = dreamSpring || new function(){
   // mouse event
   function mousedown() {
     _mouseTimeOut = setTimeout(mousehold, 500);
-    _springWaltz.userEvent('mousedown', d3.mouse(this));
+    if(_springWaltz !== null){
+      _springWaltz.userEvent('mousedown', d3.mouse(this));
+    }
   };
   function mousehold(){
     _mouseholding = true;
@@ -1050,7 +1052,9 @@ var dreamSpring = dreamSpring || new function(){
       clearTimeout(_mouseTimeOut);
     };
     _mouseholding = false;
-    _springWaltz.userEvent('mouseup', d3.mouse(this));
+    if(_springWaltz !== null){
+      _springWaltz.userEvent('mouseup', d3.mouse(this));
+    }
   };
   function mousemoved() {
     d3.event.preventDefault();
@@ -1058,7 +1062,9 @@ var dreamSpring = dreamSpring || new function(){
     if(_mouseholding){
       type = 'mousehold';
     };
-    _springWaltz.userEvent(type, d3.mouse(this));
+    if(_springWaltz !== null){
+      _springWaltz.userEvent(type, d3.mouse(this));
+    }
   };
 
   function windowResize(){
@@ -1071,7 +1077,9 @@ var dreamSpring = dreamSpring || new function(){
       _this.backRes.width = _this.backRes.videoWidth;
       _this.backRes.height = _this.backRes.videoHeight;
     };
-    _springWaltz.resize(_this.width, _this.height);
+    if(_springWaltz !== null){
+      _springWaltz.resize(_this.width, _this.height);
+    }
   };
   
   _this.init = function(){
