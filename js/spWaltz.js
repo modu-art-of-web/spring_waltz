@@ -1,8 +1,3 @@
-// window.onerror = function(msg, url, linenumber) {
-//     alert('Error message: '+msg+'\nURL: '+url+'\nLine Number: '+linenumber);
-//     return true;
-// }
-
 var spwDraw = spwDraw || {
   context : [],
   drawImageProp : function(ctx, img, x, y, w, h, offsetX, offsetY) {
