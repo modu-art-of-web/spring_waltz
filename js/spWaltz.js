@@ -324,51 +324,24 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       }
     };
   };
-
-  function drawLoading(){
-    var loadCircle = _playBtnRadius/3;
-    var loadCenter = [_canvasCen[0] - (_playBtnRadius/3), _canvasCen[1]];
-    var loadColor = "gray";
-    _loadAngle += 0.1;
-
-    _context.beginPath();
-    _context.fillStyle =  loadColor;
-    _context.lineWidth = 3;
-    if(spwVo.triPlayIndex !== null){
-      spwDraw.drawCell(spwVo.triangles[spwVo.triPlayIndex]);
-    }
-    _context.stroke();
-    _context.fill();
-    _context.closePath();
-
-    _context.beginPath();
-    _context.arc(loadCenter[0], loadCenter[1], loadCircle, 0, 2 * Math.PI, false);
-    _context.strokeStyle =  "rgba(255,255,255,1)";
-    _context.stroke();
-    _context.closePath();
-
-    _context.beginPath();
-    _context.arc(loadCenter[0] + Math.sin(_loadAngle) * loadCircle, loadCenter[1] + Math.cos(_loadAngle) * loadCircle, 3, 0, 2 * Math.PI, false);
-    _context.fillStyle =  loadColor;
-    _context.fill();
-    _context.closePath();
-  }
-  function drawReady(){
-
-    spwVo.triangles.forEach(function(t, i){
-      _context.beginPath();
-      spwDraw.drawCell(t);
+  function getTriangleDrawStyles(t, i){
+    var styles = {
+      fillStyle : '',
+      strokeStyle : '',
+      lineWidth : 1,
+    };
+    if(_stageStatus === STAGE_READY){
       if(i !== spwVo.triPlayIndex){
-        _context.fillStyle = "rgba(255,255,255,0.8)";
+        styles.fillStyle = "rgba(255,255,255,0.8)";
         var outside = false;
         t.forEach(function(ts, j){
           if(ts.outside) outside = true; 
         });
-        _context.lineWidth = 1;
+        styles.lineWidth = 1;
         if(!outside){
-          _context.strokeStyle = "rgba(255,255,255,0)";
+          styles.strokeStyle = "rgba(255,255,255,0)";
         }else{
-          _context.strokeStyle = "rgba(255,255,255,0.3)";
+          styles.strokeStyle = "rgba(255,255,255,0.3)";
         };
       }else{
         if(spwVo.triPlayIndex !== null){
@@ -377,112 +350,54 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
           var y = Math.floor(cen[1]);
           var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
           rgba.opacity = 1;
-          _context.fillStyle = rgba + "";
-          _context.strokeStyle =  "rgba(255,255,255,0.8)";
-          _context.lineWidth = 3;
+          styles.fillStyle = rgba + "";
+          styles.strokeStyle =  "rgba(255,255,255,0.8)";
+          styles.lineWidth = 3;
         }
       }
-      _context.stroke();
-      _context.fill();
-      _context.closePath();
-    });
-
-    _context.beginPath();
-    _context.lineWidth = 1;
-    _context.font = "18px Julius Sans One,sans-serif, Arial";
-    _context.fillStyle = "gray";
-    _context.textAlign = 'center';
-    if(spwCheck.isMobile){
-      if(!spwCheck.isInApp){
-        _context.fillText('Turn up your speakers and',_width/2,_height/2 + _playBtnRadius * 1.8);
-      }
-      _context.fillText('hit play to uncover spring',_width/2,_height/2 + _playBtnRadius * 1.8 + 23);
-    }else{
-      _context.fillText('Turn up your speakers and hit play to uncover spring',_width/2,_height/2 + _playBtnRadius * 1.8);
-    }
-    _context.closePath();
-  }
-  function drawFreeze(){
-    if(spwVo.triPlayIndex !== null){
-      var cen = spwUtils.getCenterAll(spwVo.triangles[spwVo.triPlayIndex]);
-      var x = Math.floor(cen[0]);
-      var y = Math.floor(cen[1]);
-      var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
-      _context.beginPath();
-      _context.fillStyle = rgba;
-      _context.strokeStyle =  "rgba(255,255,255,1)";
-      spwDraw.drawCell(spwVo.triangles[spwVo.triPlayIndex]);
-      _context.stroke();
-      _context.fill();
-      _context.closePath();
-    }
-    spwVo.triangles.forEach(function(t, i){
-      
-      if(typeof t.opacity === 'undefined'){
-        t.opacity = _freezeRatio;
-        t.whiteOp = 0.8;
-      }else{
-        if(!(i % Math.floor(Math.random()* 5) + 1)){
-          if(t.opacity < 0.7){
-            t.opacity += t.opacity;
-          }
-          t.whiteOp -= 0.1;
-        }
-      }
-      _context.beginPath();
-      _context.fillStyle = "rgba(255,255,255,"+t.whiteOp+")";
-      _context.strokeStyle =  "rgba(255,255,255,0)";
-      spwDraw.drawCell(t);
-      _context.stroke();
-      _context.fill();
-      _context.closePath();
-
-      
+    }else{ //STAGE_GUIDE, STAGE_FREEZE, STAGE_PLAYING
       var cen = spwUtils.getCenterAll(t);
       var x = Math.floor(cen[0]);
       var y = Math.floor(cen[1]);
       var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
       rgba.opacity = t.opacity;
-      _context.beginPath();
-      _context.fillStyle = rgba + "";
-      _context.strokeStyle =  "rgba(255,255,255,0)";
-      spwDraw.drawCell(t);
-      _context.stroke();
-      _context.fill();
-      _context.closePath();
+      styles.fillStyle = rgba + "";
+      styles.strokeStyle =  "rgba(255,255,255,0)";
+    }
 
-      
-      
-    });
+    return styles;
   }
-  function drawPlaying(){
-    spwVo.triangles = spwVo.voronoi(spwVo.samples.filter(function(s, i) {
-      if(typeof s.musics !== 'undefined'){
-        spwVo.samples.splice(i,1);
-      };
-      if(typeof s.flow !== 'undefined'){
-        s[1] += s.flow * 20;
-        s.melting += 0.05;
-        if(s[1] > _height || s.melting > 0.8){
-          spwVo.samples.splice(i,1);
-          _meltingDownNum--;
-        };
-      };
-      return typeof s.melting !== 'undefined';
-    })).triangles();
+  function drawTriangles(){
+    var totalMelting = 0;
 
-    if(_averageMeting < _endMeltingAvg){
+    spwVo.triangles.forEach(function(t, i){
 
-      var totalMelting = 0;
-      spwVo.triangles.forEach(function(t, i){
-        
+      if(_stageStatus === STAGE_FREEZE){
+        if(typeof t.opacity === 'undefined'){
+          t.opacity = _freezeRatio;
+          t.whiteOp = 0.8;
+        }else{
+          if(!(i % Math.floor(Math.random()* 5) + 1)){
+            if(t.opacity < 0.7){
+              t.opacity += t.opacity;
+            }
+            t.whiteOp -= 0.1;
+          }
+        }
         _context.beginPath();
+        _context.fillStyle = "rgba(255,255,255,"+t.whiteOp+")";
+        _context.strokeStyle =  "rgba(255,255,255,0)";
+        spwDraw.drawCell(t);
+        _context.stroke();
+        _context.fill();
+        _context.closePath();
+      };
+
+      if(_stageStatus === STAGE_PLAYING){
         var cen = spwUtils.getCenterAll(t);
         var x = Math.floor(cen[0]);
         var y = Math.floor(cen[1]);
-        var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
         var meltingAver = 0;
-
         t.forEach(function(ts, j){
           meltingAver += ts.melting;
         });
@@ -491,7 +406,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         if(_meltingDownLimit > _meltingDownNum && meltingAver > 0.2 && meltingAver < 0.8){
           var downSamp = [x, y];
           downSamp.melting = 0;
-          downSamp.flow = meltingAver;
+          downSamp.flowDown = meltingAver;
           downSamp.originY = y;
           spwVo.samples.push(downSamp);
           _meltingDownNum++;
@@ -499,78 +414,20 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         meltingAver > 1 ? meltingAver = 1 : meltingAver = meltingAver;
         t.opacity = 1 - meltingAver;
         totalMelting += meltingAver;
-        rgba.opacity = t.opacity;
-        _context.fillStyle = rgba + "";
-        _context.strokeStyle =  "rgba(255,255,255,0)";
-        spwDraw.drawCell(t);
-        _context.stroke();
-        _context.fill();
-        _context.closePath();
-      });
-      _averageMeting = totalMelting / spwVo.triangles.length;
-    }else{
-      if(_stageStatus !== STAGE_ENDING){
-        spwVo.resample('random');
-      }
-      drawEnding();
-    }
-  }
-  function drawGuide(){
-    spwVo.triangles.forEach(function(t, i){
+      };
+
+      var styles = getTriangleDrawStyles(t,i);
       _context.beginPath();
-      var cen = spwUtils.getCenterAll(t);
-      var x = Math.floor(cen[0]);
-      var y = Math.floor(cen[1]);
-      var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
-      rgba.opacity = t.opacity;
-      _context.fillStyle = rgba + "";
-      _context.strokeStyle =  "rgba(255,255,255,0)";
+      _context.fillStyle = styles.fillStyle;
+      _context.strokeStyle = styles.strokeStyle; 
+      _context.lineWidth = styles.lineWidth; 
       spwDraw.drawCell(t);
       _context.stroke();
       _context.fill();
       _context.closePath();
     });
 
-    _context.beginPath();
-    _context.rect(0,0,_width,_height);
-    _context.fillStyle = "rgba(0,0,0,0.8)";
-    _context.fill();
-    _context.closePath();
-
-    _context.beginPath();
-    _context.arc(_curMouse[0], _curMouse[1], 30, 0, 2 * Math.PI, false);
-    _context.fillStyle = "rgba(255,255,255,0.8)";
-    _context.fill();
-    _context.closePath();
-
-    _context.font = "23px Julius Sans One,sans-serif, Arial";
-    _context.fillStyle = "rgba(255,255,255,0.8)";
-    _context.textAlign = 'center';
-    if(spwCheck.isMobile){
-      _context.fillText('Move cursor to melt ice ',_curMouse[0],_curMouse[1]+70);
-      // _context.fillText('Click and Hold to melt faster.',_curMouse[0],_curMouse[1]+93);
-    }else{
-      _context.fillText('Move cursor to melt ice Click and Hold to melt faster.',_curMouse[0],_curMouse[1]+70);
-    }
-    
-  }
-  function draw(){
-    spwDraw.drawImageProp(_context, _backRes, 0, 0, _width, _height);
-    _imageData = _context.getImageData(0, 0, _width, _height);
-
-    if(_stageStatus === STAGE_PLAYING){
-      drawPlaying();
-    }else if(_stageStatus === STAGE_FREEZE){
-      drawFreeze()
-    }else if(_stageStatus === STAGE_ENDING){
-      drawEnding()
-    }else if(_stageStatus === STAGE_INIT){
-      drawLoading();
-    }else if(_stageStatus === STAGE_READY){
-      drawReady();
-    }else if(_stageStatus === STAGE_GUIDE){
-      drawGuide();  //melting guide
-    }
+    _averageMeting = totalMelting / spwVo.triangles.length;
   }
   function drawEnding(){
 
@@ -700,8 +557,168 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     _stageStatus = STAGE_ENDING;
     _drawEndingFrame++;
   }
+  function drawLoading(){
+    var loadCircle = _playBtnRadius/3;
+    var loadCenter = [_canvasCen[0] - (_playBtnRadius/3), _canvasCen[1]];
+    var loadColor = "gray";
+    _loadAngle += 0.1;
+
+    _context.beginPath();
+    _context.fillStyle =  loadColor;
+    _context.lineWidth = 3;
+    if(spwVo.triPlayIndex !== null){
+      spwDraw.drawCell(spwVo.triangles[spwVo.triPlayIndex]);
+    }
+    _context.stroke();
+    _context.fill();
+    _context.closePath();
+
+    _context.beginPath();
+    _context.arc(loadCenter[0], loadCenter[1], loadCircle, 0, 2 * Math.PI, false);
+    _context.strokeStyle =  "rgba(255,255,255,1)";
+    _context.stroke();
+    _context.closePath();
+
+    _context.beginPath();
+    _context.arc(loadCenter[0] + Math.sin(_loadAngle) * loadCircle, loadCenter[1] + Math.cos(_loadAngle) * loadCircle, 3, 0, 2 * Math.PI, false);
+    _context.fillStyle =  loadColor;
+    _context.fill();
+    _context.closePath();
+  }
+  function drawReady(){
+    drawTriangles();
+
+    //filltext
+    _context.beginPath();
+    _context.lineWidth = 1;
+    _context.font = "18px Julius Sans One,sans-serif, Arial";
+    _context.fillStyle = "gray";
+    _context.textAlign = 'center';
+    if(spwCheck.isMobile){
+      if(!spwCheck.isInApp){
+        _context.fillText('Turn up your speakers and',_width/2,_height/2 + _playBtnRadius * 1.8);
+      }
+      _context.fillText('hit play to uncover spring',_width/2,_height/2 + _playBtnRadius * 1.8 + 23);
+    }else{
+      _context.fillText('Turn up your speakers and hit play to uncover spring',_width/2,_height/2 + _playBtnRadius * 1.8);
+    }
+    _context.closePath();
+  }
+  function drawGuide(){
+    drawTriangles();
+
+    //back
+    _context.beginPath();
+    _context.rect(0,0,_width,_height);
+    _context.fillStyle = "rgba(0,0,0,0.8)";
+    _context.fill();
+    _context.closePath();
+
+    //circle
+    _context.beginPath();
+    _context.arc(_curMouse[0], _curMouse[1], 30, 0, 2 * Math.PI, false);
+    _context.fillStyle = "rgba(255,255,255,0.8)";
+    _context.fill();
+    _context.closePath();
+
+    //filltext
+    _context.font = "23px Julius Sans One,sans-serif, Arial";
+    _context.fillStyle = "rgba(255,255,255,0.8)";
+    _context.textAlign = 'center';
+    if(spwCheck.isMobile){
+      _context.fillText('Move cursor to melt ice ',_curMouse[0],_curMouse[1]+70);
+      // _context.fillText('Click and Hold to melt faster.',_curMouse[0],_curMouse[1]+93);
+    }else{
+      _context.fillText('Move cursor to melt ice Click and Hold to melt faster.',_curMouse[0],_curMouse[1]+70);
+    }
+  }
   
-  
+  function drawFreeze(){
+    if(spwVo.triPlayIndex !== null){
+      var cen = spwUtils.getCenterAll(spwVo.triangles[spwVo.triPlayIndex]);
+      var x = Math.floor(cen[0]);
+      var y = Math.floor(cen[1]);
+      var rgba = spwUtils.squareSampleImage(_imageData, x, y, 3, _width);
+      _context.beginPath();
+      _context.fillStyle = rgba;
+      _context.strokeStyle =  "rgba(255,255,255,1)";
+      spwDraw.drawCell(spwVo.triangles[spwVo.triPlayIndex]);
+      _context.stroke();
+      _context.fill();
+      _context.closePath();
+    }
+    drawTriangles();
+  }
+  function drawPlaying(){
+    //recaculate
+    spwVo.triangles = spwVo.voronoi(spwVo.samples.filter(function(s, i) {
+      if(typeof s.musics !== 'undefined'){
+        spwVo.samples.splice(i,1);
+      };
+      if(typeof s.flowDown !== 'undefined'){
+        s[1] += s.flowDown * 20;
+        s.melting += 0.05;
+        if(s[1] > _height || s.melting > 0.8){
+          spwVo.samples.splice(i,1);
+          _meltingDownNum--;
+        };
+      };
+      return typeof s.melting !== 'undefined';
+    })).triangles();
+
+    if(_averageMeting < _endMeltingAvg){
+      drawTriangles();
+    }else{
+      if(_stageStatus !== STAGE_ENDING){
+        spwVo.resample('random');
+      }
+      drawEnding();
+    }
+  }
+
+  // drawSite:function(site) {
+  //   this.context.moveTo(site[0] + 2.5, site[1]);
+  //   this.context.arc(site[0], site[1], 2.5, 0, 2 * Math.PI, false);
+  // },
+  // drawLink:function(link) {
+  //   this.context.moveTo(link.source[0], link.source[1]);
+  //   this.context.lineTo(link.target[0], link.target[1]);
+  // },
+  // drawCell:function(cell) {
+  //   if (!cell) return false;
+  //   this.context.moveTo(cell[0][0], cell[0][1]);
+  //   for (var j = 1, m = cell.length; j < m; j++) {
+  //     this.context.lineTo(cell[j][0], cell[j][1]);
+  //   };
+  //   return true;
+  // },
+
+  function draw(){
+    spwDraw.drawImageProp(_context, _backRes, 0, 0, _width, _height);
+    _imageData = _context.getImageData(0, 0, _width, _height);
+
+    switch(_stageStatus){
+      case STAGE_PLAYING : 
+        drawPlaying();
+        break;
+      case STAGE_FREEZE : 
+        drawFreeze();
+        break;
+      case STAGE_ENDING : 
+        drawEnding();
+        break;
+      case STAGE_INIT : 
+        drawLoading();
+        break;
+      case STAGE_READY : 
+        drawReady();
+        break;
+      case STAGE_GUIDE : 
+        drawGuide();
+        break;
+    }
+  }
+
   function audioInit(){
     _audioVis = new Audio("resources/audios/spring_waltz.mp3");
     _audioVis.addEventListener("ended",function() {
@@ -925,6 +942,40 @@ var dreamSpring = dreamSpring || new function(){
 
   _this.width, _this.height, _this.context, _this.backRes;
 
+  // mouse event
+  function mousedown() {
+    _mouseTimeOut = setTimeout(mousehold, 500);
+    if(_springWaltz !== null){
+      _springWaltz.userEvent('mousedown', d3.mouse(this));
+    }
+  };
+  function mousehold(){
+    _mouseholding = true;
+  };
+  function mouseup(){
+    if (_mouseTimeOut){
+      clearTimeout(_mouseTimeOut);
+    };
+    _mouseholding = false;
+    if(_springWaltz !== null){
+      _springWaltz.userEvent('mouseup', d3.mouse(this));
+    }
+  };
+  function mousemoved() {
+    d3.event.preventDefault();
+    var type = 'mousemove';
+    if(_mouseholding){
+      type = 'mousehold';
+    };
+    if(_springWaltz !== null){
+      _springWaltz.userEvent(type, d3.mouse(this));
+    }
+  };
+  function setMouseEvent(){
+    _canvas.on("touchmove mousemove", mousemoved);
+    _canvas.on("touchstart mousedown", mousedown);
+    _canvas.on("touchend mouseup", mouseup);
+  };
   function startSpringWalts(){
     
     if(_springWaltz === null){
@@ -935,40 +986,22 @@ var dreamSpring = dreamSpring || new function(){
     }else{
       _springWaltz.resetBackres(_this.backRes);
     }
-    
   }
-  function preLoad(){
-    if(typeof _imgArr[_imgPreNum] === 'undefined') return;
-    var img=new Image();
-    img.src='resources/imgs/spw'+_imgArr[_imgPreNum]+'.jpg';
-    _imgPreNum++;
-    img.onload = preLoad;
-  }
-  function randomBackInti(){
-    for(var i=1; i <= _imgTotal; i++){
-      _imgArr.push(i);
+
+  function windowResize(){
+    _this.width = window.innerWidth;
+    _this.height = window.innerHeight;
+    _canvas.attr("width", _this.width).attr("height", _this.height);
+    _canvas.width = _this.width;
+    _canvas.height = _this.height;
+    if(_this.backRes.resType === 'video'){
+      _this.backRes.width = _this.backRes.videoWidth;
+      _this.backRes.height = _this.backRes.videoHeight;
     };
-    _imgArr = shuffle(_imgArr);
-    preLoad(0);
-  }
-  function shuffle(array) {
-    var currentIndex = array.length, temporaryValue, randomIndex;
-
-    // While there remain elements to shuffle...
-    while (0 !== currentIndex) {
-
-      // Pick a remaining element...
-      randomIndex = Math.floor(Math.random() * currentIndex);
-      currentIndex -= 1;
-
-      // And swap it with the current element.
-      temporaryValue = array[currentIndex];
-      array[currentIndex] = array[randomIndex];
-      array[randomIndex] = temporaryValue;
+    if(_springWaltz !== null){
+      _springWaltz.resize(_this.width, _this.height);
     }
-
-    return array;
-  }
+  };
   function initImage(){
     _this.backRes = new Image;
     _this.backRes.resType = 'image';
@@ -1012,6 +1045,7 @@ var dreamSpring = dreamSpring || new function(){
       initVideo();
     };
   }
+
   function initCanvas(){
     _canvas = d3.select("body").append("canvas");
     if (spwCheck.isTouch) {
@@ -1024,66 +1058,45 @@ var dreamSpring = dreamSpring || new function(){
     _this.context = _canvas.node().getContext("2d");
     _this.setBackResource();
   }
+  function preLoad(){
+    if(typeof _imgArr[_imgPreNum] === 'undefined') return;
+    var img=new Image();
+    img.src='resources/imgs/spw'+_imgArr[_imgPreNum]+'.jpg';
+    _imgPreNum++;
+    img.onload = preLoad;
+  }
+  function shuffle(array) {
+    var currentIndex = array.length, temporaryValue, randomIndex;
 
-  function setMouseEvent(){
-    _canvas.on("touchmove mousemove", mousemoved);
-    _canvas.on("touchstart mousedown", mousedown);
-    _canvas.on("touchend mouseup", mouseup);
-  };
+    // While there remain elements to shuffle...
+    while (0 !== currentIndex) {
 
-  // mouse event
-  function mousedown() {
-    _mouseTimeOut = setTimeout(mousehold, 500);
-    if(_springWaltz !== null){
-      _springWaltz.userEvent('mousedown', d3.mouse(this));
-    }
-  };
-  function mousehold(){
-    _mouseholding = true;
-  };
-  function mouseup(){
-    if (_mouseTimeOut){
-      clearTimeout(_mouseTimeOut);
-    };
-    _mouseholding = false;
-    if(_springWaltz !== null){
-      _springWaltz.userEvent('mouseup', d3.mouse(this));
-    }
-  };
-  function mousemoved() {
-    d3.event.preventDefault();
-    var type = 'mousemove';
-    if(_mouseholding){
-      type = 'mousehold';
-    };
-    if(_springWaltz !== null){
-      _springWaltz.userEvent(type, d3.mouse(this));
-    }
-  };
+      // Pick a remaining element...
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex -= 1;
 
-  function windowResize(){
-    _this.width = window.innerWidth;
-    _this.height = window.innerHeight;
-    _canvas.attr("width", _this.width).attr("height", _this.height);
-    _canvas.width = _this.width;
-    _canvas.height = _this.height;
-    if(_this.backRes.resType === 'video'){
-      _this.backRes.width = _this.backRes.videoWidth;
-      _this.backRes.height = _this.backRes.videoHeight;
-    };
-    if(_springWaltz !== null){
-      _springWaltz.resize(_this.width, _this.height);
+      // And swap it with the current element.
+      temporaryValue = array[currentIndex];
+      array[currentIndex] = array[randomIndex];
+      array[randomIndex] = temporaryValue;
     }
-  };
-  
+
+    return array;
+  }
+  function randomBackInti(){
+    for(var i=1; i <= _imgTotal; i++){
+      _imgArr.push(i);
+    };
+    _imgArr = shuffle(_imgArr);
+    preLoad(0);
+  }
+
   _this.init = function(){
     if(_isSupport){
       randomBackInti();
       initCanvas();
       window.onresize = windowResize;
     }else{
-      // remove dom
-      // make 404 page
       document.getElementById('sp_fullwrap').className = 'screen-bg';
       document.getElementById('sp_fullwrap').innerHTML = '<h1>Sorry</h1><div class="message">Spring Waltz was created with HTML5 and CSS3.<br>It\'s a Chrome experiment and you can see perfectly on Chrome browser.<br>Please use <a href="http://www.google.com/chrome" target="_blank">Google Chrome browser</a>.</div>';
       return;
