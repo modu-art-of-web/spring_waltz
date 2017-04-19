@@ -62,7 +62,30 @@ var spwDraw = spwDraw || {
     };
     return true;
   },
-}
+  drawSinglePolygon : function (ring, width, height, trans) {
+    if(typeof trans === 'undefined' || trans === null){
+      trans = 0;
+    };
+    var that = this;
+    var padX = trans;
+    var padY = trans;
+    ring.forEach(function(point, i) {
+      if(trans !== 0){
+        if(point[0] === 0 || point[0] === width){
+          padX = 0;
+        }
+        if(point[1] === 0 || point[1] === height){
+          padY = 0;
+        }
+      };
+      if(i > 0){
+        that.context.lineTo(point[0] + padX, point[1] + padY);
+      }else{
+        that.context.moveTo(point[0] + padX, point[1] + padY);
+      };
+    });
+  }
+};
 
 var spwVoronoi = function(w, h, sampleType, playBtnRadius){
   var _this = this;
@@ -482,7 +505,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       geoMerge.coordinates.forEach(function(polygon) {
         polygon.forEach(function(ring, i) {
           _context.beginPath();
-          spwUtils.renderSinglePolygon(_context, ring, _width, _height, 0);
+          spwDraw.drawSinglePolygon(ring, _width, _height, 0);
           var strokeOpa = _drawEndingFrame / _endingStep[1] - 1;
           var fillOpa = strokeOpa > 0.7 ? 0.7 : strokeOpa;
           _context.fillStyle = "rgba(255,255,255,"+fillOpa+")";

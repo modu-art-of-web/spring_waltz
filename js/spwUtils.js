@@ -178,32 +178,7 @@ var spwUtils = spwUtils || function() {
         center[0] = sum[0] / cenArr.length;
         center[1] = sum[1] / cenArr.length;
         return center;
-      },
-      renderSinglePolygon : function (context, ring, width, height, trans) {
-        if(typeof trans === 'undefined' || trans === null){
-          trans = 0;
-        };
-        var that = this;
-        var padX = trans;
-        var padY = trans;
-        ring.forEach(function(point, i) {
-          if(trans !== 0){
-            if(point[0] === 0 || point[0] === width){
-              padX = 0;
-            }
-            if(point[1] === 0 || point[1] === height){
-              padY = 0;
-            }
-          };
-          if(i > 0){
-            context.lineTo(point[0] + padX, point[1] + padY);
-          }else{
-            context.moveTo(point[0] + padX, point[1] + padY);
-          };
-        });
-      },
-
-
+      }
     };
 }();
 
