@@ -1,7 +1,7 @@
-window.onerror = function(msg, url, linenumber) {
-    alert('Error message: '+msg+'\nURL: '+url+'\nLine Number: '+linenumber);
-    return true;
-}
+// window.onerror = function(msg, url, linenumber) {
+//     alert('Error message: '+msg+'\nURL: '+url+'\nLine Number: '+linenumber);
+//     return true;
+// }
 
 var spwDraw = spwDraw || {
   context : [],
@@ -16,7 +16,7 @@ var spwDraw = spwDraw || {
     offsetX = typeof offsetX === "number" ? offsetX : 0.5;
     offsetY = typeof offsetY === "number" ? offsetY : 0.5;
 
-    // keep bounds [0.0, 1.0]
+    // keep bounds [0.0, 1.0]AudioContext
     if (offsetX < 0) offsetX = 0;
     if (offsetY < 0) offsetY = 0;
     if (offsetX > 1) offsetX = 1;
@@ -252,6 +252,9 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       STAGE_GUIDE = 3,
       STAGE_PLAYING = 4,
       STAGE_ENDING = 5,
+      _autoReplayTime = 30000, //by tjhan 180209
+      _autoReplayTimeout = null, //by tjhan 180209
+      _autoMeltingRatio = 0.0005, // by tjhan 180209 
       _endMeltingAvg = 0.65,
       _drawEndingFrame = 0,
       _endingStep = [5,8,13],
@@ -300,6 +303,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     var perAngle = 360 / step;
     for (var i = 0; i <= 60; i++){
       var value = uintFrequencyData[i * step] / 4;
+      // if(i > 59) alert('uintFrequencyData[i] : ' + uintFrequencyData[i]);
       particle = spwVo.samples[i++];
       particle[0] = _curMouse[0] + Math.sin(perAngle*i) * (value*8);
       particle[1] = _curMouse[1] + Math.cos(perAngle*i) * (value*8);
@@ -489,6 +493,9 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         var meltingAver = 0;
 
         t.forEach(function(ts, j){
+          if(j % 30 === 0){
+            ts.melting += _autoMeltingRatio;  
+          }
           meltingAver += ts.melting;
         });
         meltingAver = meltingAver / 3;
@@ -701,8 +708,14 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
           }
         })
       });
+    }else{
+      if(_autoReplayTime > 0){
+        _autoReplayTimeout = setTimeout(function(){
+          doReplay();
+        }, _autoReplayTime);
+      }
     }
-    
+
     _stageStatus = STAGE_ENDING;
     _drawEndingFrame++;
   }
@@ -858,15 +871,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         }else if(isAuthorPos(m)){
           window.open("http://blog.taejaehan.com");
         }else if(isReplay(m)){
-          if(_audioEnded){
-            if(spwCheck.audioCtx){
-              _audioVis.ctx.currentTime = 0;
-            };
-            _audioVis.play();
-          }
-          _averageMeting = 0;
-          _nextBackLoading = true;
-          dreamSpring.setBackResource(resetBackres);
+          doReplay()
         }
       }else if(type === 'mousemove'){
         if(isAuthorPos(m)){
@@ -883,6 +888,24 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       _stageStatus = STAGE_PLAYING;
     }
     _curMouse = m;
+  }
+  function doReplay(){
+    
+    if(_stageStatus !== STAGE_ENDING) return;
+    console.log('doReplay');
+    if(_autoReplayTimeout != null){
+      clearTimeout(_autoReplayTimeout);
+    }
+    if(_audioEnded){
+      if(spwCheck.audioCtx){
+        _audioVis.ctx.currentTime = 0;
+      };
+      _audioVis.play();
+    }
+    _averageMeting = 0;
+    _nextBackLoading = true;
+    dreamSpring.setBackResource(resetBackres);
+    _stageStatus = STAGE_FREEZE;
   }
   function resetBackres(back){
     _backRes = back;
