@@ -944,7 +944,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     _averageMeting = 0;
     _nextBackLoading = true;
     dreamSpring.setBackResource(resetBackres);
-    _stageStatus = STAGE_FREEZE;
+    // _stageStatus = STAGE_FREEZE;
   }
   function resetBackres(back){
     _backRes = back;
