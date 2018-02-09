@@ -567,7 +567,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
     
   }
   function draw(){
-    console.log('_stageStatus : ' + _stageStatus);
+    // console.log('_stageStatus : ' + _stageStatus);
     spwDraw.drawImageProp(_context, _backRes, 0, 0, _width, _height);
     _imageData = _context.getImageData(0, 0, _width, _height);
 
@@ -892,7 +892,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
   function doReplay(){
     
     if(_stageStatus !== STAGE_ENDING) return;
-    console.log('doReplay');
+    // console.log('doReplay');
     if(_autoReplayTimeout != null){
       clearTimeout(_autoReplayTimeout);
     }
