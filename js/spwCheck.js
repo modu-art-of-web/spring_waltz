@@ -17,7 +17,8 @@ var spwCheck = new function(){
     _this.videoAutoPlay = Modernizr.videoautoplay;
     _this.videoLoop = Modernizr.videoloop;
     _this.checkVendor = true;
-    if (!Modernizr.csstransforms3d || !Modernizr.canvas || !Modernizr.canvastext) {
+    _this.isIeOld = /Edge\/\d./i.test(navigator.userAgent) || /MSIE 10/i.test(navigator.userAgent) || /MSIE 9/i.test(navigator.userAgent) || /rv:11.0/i.test(navigator.userAgent);
+    if (!Modernizr.csstransforms3d || !Modernizr.canvas || !Modernizr.canvastext || _this.isIeOld) {
         _this.vendor = "";
     } else {
         var styles = window.getComputedStyle(document.documentElement, '');
@@ -33,4 +34,5 @@ var spwCheck = new function(){
     _this.isTwInApp = (ua.indexOf("Twitter") > -1) || (ua.indexOf("twitter") > -1);
     _this.isInApp = !Modernizr.audio || _this.isFbInApp || _this.isKakaoInApp || _this.isTwInApp;
     _this.isSafari = /Safari/.test(navigator.userAgent) && /Apple Computer/.test(navigator.vendor);
+
 }
