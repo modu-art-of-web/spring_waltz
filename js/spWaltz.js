@@ -257,7 +257,7 @@ var spwVoronoi = function(w, h, sampleType, playBtnRadius){
 var springWaltz = springWaltz || function(w, h, ctx, back){
 
   var spwVo,
-      _spUrl = 'http://springwaltz.taejaehan.com',
+      _spUrl = 'https://springwaltz.hantaejae.com',
       _width = w,
       _height = h,
       _canvasCen = [w/2, h/2],
@@ -908,7 +908,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         }else if(isShareTwPos(m)){
           window.open("https://twitter.com/share?url="+encodeURIComponent(_spUrl)+"&text="+document.title);
         }else if(isAuthorPos(m)){
-          window.open("http://blog.taejaehan.com");
+          window.open("https://blog.hantaejae.com");
         }else if(isReplay(m)){
           doReplay()
         }
