@@ -767,41 +767,62 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
       // melted all
       _averageMeting = 1;
     });
-    if(spwCheck.isSafari){
-      setTimeout(function(){
-        audioLoaded();
-      }, 3000);
-    }else{
-      if(typeof _audioVis.readyState !== 'undefined' && _audioVis.readyState > 3 ) {
-        audioLoaded();
-      }else{
-        _audioVis.addEventListener('loadeddata', function() {
-          // audioLoaded();
-        }, false);
-        _audioVis.addEventListener('canplay', function() {
-          // audioLoaded();
-        }, false);
-        _audioVis.addEventListener('canplaythrough', function() {
-          audioLoaded();
-        }, false);
 
-      };
-    }
+
+
+    // The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page.
+    // 예전과 달리 유저의 동작없이는 window.AudioContext 를 생성할 수 없어서 주석 처리 by tjhan 20201129
+
+    // if(spwCheck.isSafari){
+    //   setTimeout(function(){
+    //     audioLoaded();
+    //   }, 3000);
+    // }else{
+    //   if(typeof _audioVis.readyState !== 'undefined' && _audioVis.readyState > 3 ) {
+    //     audioLoaded();
+    //   }else{
+    //     _audioVis.addEventListener('loadeddata', function() {
+    //       // audioLoaded();
+    //     }, false);
+    //     _audioVis.addEventListener('canplay', function() {
+    //       // audioLoaded();
+    //     }, false);
+    //     _audioVis.addEventListener('canplaythrough', function() {
+    //       audioLoaded();
+    //     }, false);
+
+    //   };
+    // }
+
+    // 바로 스테이지 레디 by tjhan 20201129
+    _stageStatus = STAGE_READY;
   };
   function audioLoaded(){
-    if(_stageStatus < STAGE_READY){
-      _stageStatus = STAGE_READY;
-      if(spwCheck.audioCtx && typeof _audioVis.ctx === 'undefined'){
-        _audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
-        var source = _audioVis.ctx.createMediaElementSource(_audioVis); // creates audio source
-        _analyser = _audioVis.ctx.createAnalyser(); // creates analyserNode
-        source.connect(_audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
-        source.connect(_analyser); // connects the analyser node to the audioNode and the audioDestinationNode
-      }
+    // if(_stageStatus < STAGE_READY){
+    //   _stageStatus = STAGE_READY;
+    //   if(spwCheck.audioCtx && typeof _audioVis.ctx === 'undefined'){
+    //     _audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
+    //     var source = _audioVis.ctx.createMediaElementSource(_audioVis); // creates audio source
+    //     _analyser = _audioVis.ctx.createAnalyser(); // creates analyserNode
+    //     source.connect(_audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
+    //     source.connect(_analyser); // connects the analyser node to the audioNode and the audioDestinationNode
+    //   }
+    // }
+
+    if(spwCheck.audioCtx && typeof _audioVis.ctx === 'undefined'){
+      _audioVis.ctx = new (window.AudioContext || window.webkitAudioContext)(); // creates audioNode
+      var source = _audioVis.ctx.createMediaElementSource(_audioVis); // creates audio source
+      _analyser = _audioVis.ctx.createAnalyser(); // creates analyserNode
+      source.connect(_audioVis.ctx.destination); // connects the audioNode to the audioDestinationNode (computer speakers)
+      source.connect(_analyser); // connects the analyser node to the audioNode and the audioDestinationNode
     }
+    // _audioVis.ctx = new AudioContext();
+    // _analyser = _audioVis.ctx.createAnalyser();
   }
   function startPlay(){
     if(!spwCheck.isInApp){
+      //버튼 누르면 그때 오디오 context생성 by tjhan 20201129
+      audioLoaded()
       _audioVis.play();
     };
     // setTimeout(function(){
@@ -908,7 +929,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         }else if(isShareTwPos(m)){
           window.open("https://twitter.com/share?url="+encodeURIComponent(_spUrl)+"&text="+document.title);
         }else if(isAuthorPos(m)){
-          window.open("https://blog.hantaejae.com");
+          window.open("https://hantaejae.com");
         }else if(isReplay(m)){
           doReplay()
         }
