@@ -929,7 +929,7 @@ var springWaltz = springWaltz || function(w, h, ctx, back){
         }else if(isShareTwPos(m)){
           window.open("https://twitter.com/share?url="+encodeURIComponent(_spUrl)+"&text="+document.title);
         }else if(isAuthorPos(m)){
-          window.open("https://hantaejae.com");
+          window.open("https://taejaehan.com");
         }else if(isReplay(m)){
           doReplay()
         }
