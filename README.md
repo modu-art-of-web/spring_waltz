@@ -4,4 +4,4 @@ I made this interaction project after listening to classical music ‘Voices of 
 
 <img src="./resources/imgs/spw_share2.jpg" >
 
-<a href="https://springwaltz.hantaejae.com/">Spring Waltz</a>
+<a href="https://spring_waltz.taejaehan.com/">Spring Waltz</a>
